@@ -1,0 +1,8 @@
+9; 2615 89596 SCHEMA - _rdb_bdr rdbbdr_user
+494; 1255 89598 FUNCTION _rdb_bdr hex2dec(text) postgres
+218; 1259 89638 TABLE _rdb_bdr walq__cina_xid postgres
+212; 1259 89606 VIEW _rdb_bdr v_replication_lag postgres
+4496; 2606 90068 CONSTRAINT _rdb_bdr walq__urss_filtro walq__cina_filtro_pkey rdbbdr_user
+4494; 2606 89648 CONSTRAINT _rdb_bdr walq__cina_xid walq__cina_xid_pkey postgres
+4491; 1259 89986 INDEX _rdb_bdr walq__cina_xid_idx postgres
+4492; 1259 89987 INDEX _rdb_bdr walq__cina_xid_idx2 postgres

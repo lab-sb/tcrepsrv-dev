@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!-- No need to set system property "log4j2.contextSelector" to any value when using <asyncLogger> or <asyncRoot>. -->
+<Configuration status="WARN">
+    <Properties>
+        <Property name="basePath">../log</Property>
+        <Property name="node">${env:NODEMST}</Property>
+    </Properties>
+<Appenders>
+	<RollingFile name="rollingFile" fileName="${basePath}/TCRepSrv_${node}.log" filePattern="${basePath}/TCRepSrv_${node}.%i.log.gz" immediateFlush="false" append="true">
+		 <PatternLayout pattern="%-5p | %d{yyyy-MM-dd HH:mm:ss.SSS} | [%t] %C{2} (%F:%L) - %m%n" />
+		<Policies>
+			<SizeBasedTriggeringPolicy size="500MB" />
+		</Policies>
+    <DefaultRolloverStrategy max="5" />
+</RollingFile> 
+</Appenders>
+<Loggers>
+<!-- pattern layout actually uses location, so we need to include it -->
+	<AsyncLogger name="com.edslab" level="all" includeLocation="true">
+		<!-- AppenderRef ref="rollingFile" level="off" -->
+		<!-- AppenderRef ref="rollingFile" level="fatal" -->
+		<!-- AppenderRef ref="rollingFile" level="error" -->
+		<!-- AppenderRef ref="rollingFile" level="warn" -->
+		<!-- AppenderRef ref="rollingFile" level="info" -->
+		<!-- AppenderRef ref="rollingFile" level="debug" -->
+		<!-- AppenderRef ref="rollingFile" level="trace" -->
+		<!-- AppenderRef ref="rollingFile" level="all" -->
+
+		<AppenderRef ref="rollingFile" level="all"/>
+	</AsyncLogger>
+		<!--Root level="info" includeLocation="true">
+			<AppenderRef ref="RollingFile"/>
+		</Root-->
+</Loggers>
+</Configuration>

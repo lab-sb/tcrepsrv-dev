@@ -1,0 +1,20 @@
+4; 2615 13570310 SCHEMA - _rdb_bdr rdbbdr_user
+209; 1255 13570311 FUNCTION _rdb_bdr hex2dec(text) postgres
+225; 1255 13570324 FUNCTION _rdb_bdr loadwal(integer) postgres
+226; 1255 13570325 FUNCTION _rdb_bdr pushwal() postgres
+227; 1255 13570326 FUNCTION _rdb_bdr pushwal(integer) postgres
+199; 1259 13570328 SEQUENCE _rdb_bdr walq__mila_wid_seq postgres
+200; 1259 13570330 TABLE _rdb_bdr walq__mila postgres
+203; 1259 47781576 TABLE _rdb_bdr walq__mila_filtro rdbbdr_user
+201; 1259 13570338 TABLE _rdb_bdr walq__mila_log postgres
+202; 1259 13570345 TABLE _rdb_bdr walq__mila_offset postgres
+198; 1259 13570316 TABLE _rdb_bdr walq__mila_xid postgres
+197; 1259 13570312 VIEW _rdb_bdr v_replication_lag postgres
+3625; 2606 47781580 CONSTRAINT _rdb_bdr walq__mila_filtro walq__mila_filtro_pkey rdbbdr_user
+3623; 2606 13570353 CONSTRAINT _rdb_bdr walq__mila walq__mila_pkey postgres
+3620; 2606 13570321 CONSTRAINT _rdb_bdr walq__mila_xid walq__mila_xid_pkey postgres
+3621; 1259 13570354 INDEX _rdb_bdr walq__mila_idx postgres
+3616; 1259 13570355 INDEX _rdb_bdr walq__mila_xid_current_xid postgres
+3617; 1259 13570322 INDEX _rdb_bdr walq__mila_xid_idx postgres
+3618; 1259 13570323 INDEX _rdb_bdr walq__mila_xid_idx2 postgres
+3633; 2620 22225450 TRIGGER _rdb_bdr walq__mila walq_mila_trigger postgres

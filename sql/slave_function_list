@@ -1,0 +1,24 @@
+4; 2615 13570310 SCHEMA - _rdb_bdr rdbbdr_user
+211; 1255 47782209 FUNCTION _rdb_bdr execdata(text) postgres
+209; 1255 13570311 FUNCTION _rdb_bdr hex2dec(text) postgres
+224; 1255 47782210 FUNCTION _rdb_bdr runwal() postgres
+228; 1255 47782211 FUNCTION _rdb_bdr runwal(integer) postgres
+229; 1255 47782212 FUNCTION _rdb_bdr runwalt(integer) rdbbdr_user
+230; 1255 47782213 FUNCTION _rdb_bdr runwalt(integer, integer) rdbbdr_user
+237; 1255 47782259 FUNCTION _rdb_bdr runwalt_walq__dubl(integer, integer) rdbbdr_user
+231; 1255 47782214 FUNCTION _rdb_bdr scanwal() postgres
+232; 1255 47782215 FUNCTION _rdb_bdr scanwal(integer) postgres
+233; 1255 47782216 FUNCTION _rdb_bdr scanwaldata(integer) postgres
+234; 1255 47782217 FUNCTION _rdb_bdr scanwalf(integer) rdbbdr_user
+238; 1255 47782260 FUNCTION _rdb_bdr scanwalf_walq__dubl(integer) rdbbdr_user
+235; 1255 47782218 FUNCTION _rdb_bdr scanwalfold(integer) rdbbdr_user
+204; 1259 47782220 TABLE _rdb_bdr walq__dubl postgres
+205; 1259 47782227 TABLE _rdb_bdr walq__dubl_conflicts rdbbdr_user
+206; 1259 47782234 TABLE _rdb_bdr walq__dubl_filtro rdbbdr_user
+207; 1259 47782237 TABLE _rdb_bdr walq__dubl_log postgres
+208; 1259 47782245 TABLE _rdb_bdr walq__dubl_offset postgres
+197; 1259 13570312 VIEW _rdb_bdr v_replication_lag postgres
+3630; 2606 47782253 CONSTRAINT _rdb_bdr walq__dubl_filtro walq__dubl_filtro_pkey rdbbdr_user
+3632; 2606 47782255 CONSTRAINT _rdb_bdr walq__dubl_offset walq__dubl_offset_pkey postgres
+3628; 2606 47782257 CONSTRAINT _rdb_bdr walq__dubl walq__dubl_pkey postgres
+3626; 1259 47782258 INDEX _rdb_bdr walq__dubl_idx postgres

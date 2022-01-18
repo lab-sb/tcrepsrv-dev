@@ -1,0 +1,5 @@
+4; 2615 49790058 SCHEMA - _rdb_bdr rdbbdr_user
+217; 1255 49790059 FUNCTION _rdb_bdr hex2dec(text) postgres
+204; 1259 49790064 TABLE _rdb_bdr walq__mila_xid postgres
+203; 1259 49790060 VIEW _rdb_bdr v_replication_lag postgres
+3563; 2606 52365614 CONSTRAINT _rdb_bdr walq__mila_xid walq__mila_xid_pkey postgres
