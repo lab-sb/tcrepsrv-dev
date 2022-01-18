@@ -1,0 +1,274 @@
+Agenda
+
+- TCapture Overview
+- TCapture engine
+- Architecture
+- Queues
+- Modules
+- Naming Conventions
+- Features
+- Getting and Installing
+- Monitoring 
+- Conflicts
+- TCSrvCTL
+- Performance
+- Use cases
+- Troubleshooting
+- Issues/Bugs
+Questions?
+- Multithread Edition
+-  Sampe Conf file
+- Limitations
+
+<< TCapture Overview >>
+- PG-to-PG
+- Log-based replication of DML through logical decoding,
+- capture transactions for replication from Write-Ahead Logs (WAL)
+
+Supports PG-to-PG, log-based replication of DML, was introduced for PG v>9.4 and currently is available on Linux.
+The big advantage of TCapture is that is based on PostgreSQL’s logical decoding, providing efficient, fast and consistent database replication for clusters.
+It capture transactions for replication from Write-Ahead Logs (WAL) instead of using triggers, eliminating overhead on master databases
+and is designed to be as transparent as possible to the client, stable and secure by default.
+
+Is a ‘data movement’ product, which, well, moves data from one place to another.
+More specifically, it captures database transactions in one database and then applies these to another database.
+ Because TCapture captures only data changes, there is no impact on the applications already running on that database.
+ This means that can be used in pretty much any database system.
+
+<< TCapture Engine >>
+- Is a Java application
+- Scan the transaction log of all primary database
+- Replication Database , PG user database exclusively used by TCapture , store Transactions
+- Publication/Subscription of Transactions storing tables (queues)
+- Transaction is then applied
+
+The actual TCapture engine is a Java application which runs as a separate program outside Postgres, and which must be started explicitly.
+When TCapture is running, it will scan the transaction log of all primary databases and pick up transactions which must be replicated.
+Transactions which have been picked up are stored in the “Replication Database”, a PG user database exclusively used by TCapture.
+In the Replication Database, transaction is ‘copied’ to all replicate databases which have a subscription for this transaction.
+Transaction is then applied to the replicate tables by inserting it into by the dedicated Java application module
+
+Efficient, fast and consistent
+Considering its asynchronous mesh architecture, TCapture handles writing transactions quite well.
+Thanks to its tight integration into the database system and its transaction serializing mechanism, TCapture
+provide efficient, fast and consistent database replication.
+
+<< Naming Conventions >>
+--  CDC Change Data Capture
+-- Source Node called also primary/master/producer
+-- Target Node called also slave/secondary/consumer
+-- Replication Slots types: rdb_<node>_bdr <master>_publ_<slave>
+        name rdb_<node>_bdr logical slot with plugin rdblogdec on master db
+        name <master>_publ_<slave> logical slot with plugin pgoutput on rdb_db__<master> db , is the master node publication <master>_publ having a slave subscription <slave>_subs_<master>
+--  Publication * pubname: <master>_publ on rdb_db_<master>`
+--  Subscription
+            subname: <slave>_subs_<master>
+            subconninfo: primary node connection informations
+            subpublications: <node master>_publ
+            subdb: rdb_db__<node slave>
+--    MultiMaster MultiMaster 2 nodes MultiMaster 3 nodes MultiMaster 4 nodes
+--    Queue table walq_<node> structure
+        wid incremental sequence
+        lsn Logical Sequence Numner
+        xid transaction as is read from replication slot
+        data text column containing DML
+        dateop timestamp
+        current_xid transaction xid of insert into queue of dml
+--    Incoming/Replicated queues
+--    Outcoming/Replication queues
+--    TCapt Module to capture change on master database
+--    TAppl Module to apply change on slave database
+--   TMoni Module to monitor replication flow
+--    TCRepSrv TCapture Main Replication Server Program
+--    TC_srvctl.sh TCapture CLI
+--    TWrapperSQL Wrapper program to execute SQL/DML locally not replicated
+--    TSkipXid Skip transactions program to increase/advance replication marker on Slave
+--    H/M/S rispectively Monitor/Master/Slave, type of nodes
+-    RDB db rdb_db__<node> Replication Distribution Database
+-    schema: _rdb_bdr
+-    conf files: <node>_rdb_bdr.conf node master conf
+-        <node>_bdr_rdb.conf node slave conf
+-    tables: _rdb_bdr.
+-        walq_<node> queue storing replicate transactions walq_<node>_offset
+		marker of last transaction consumed by slave
+		walq_<node>_xid list of transactions ids incoming from replicate queues * to avoid recursive transactions (avoid cross CDC between 2 nodes with infinitive loop problem)
+-            xid coming from replicated queues must not be trace and insert in replication queues
+-    software folder structure: * path $RDBBDR * conf * sql * src * bin * run * tmp * ecc..
+
+<< Features >>
+
+	features:
+            CDC stored in queues
+            transaction level granularity and commit order
+            multimaster replication in architecture of type mesh
+            automatic management of queues
+            table replication filtering
+            multimaster 2/3/4 nodes
+            conflict detection (not prevention)
+            history of replicated transaction stored in log tables
+            java configuration script
+            monitoring : status of master/slaves/monitor threads
+            monitoring : status of replications,positions last updated queues
+            Wrapper program to execute sql locally * not captured transaction/not in replication flow
+            multithread TCapture Replication Server
+            thread TCapt TAppl TMoni able to be started/stopped/disabled/enabled with Repl Serv in execution
+            tracing of DDL execution _rdb_bdr.walq__<node>_ddl using event trigger
+            helatcheck with upserts to move database/healthcheck
+            loglevel granularity
+
+
+
+
+<< Queues >>
+A queue implementation on PostgreSQL within tables .
+Transaction are queued in storing tables published by producers to be subsequently processed by consumers wich subscribe the storing tables .
+Queue managment is is automatized in TCoor module
+
+<< Modules >>
+TCRepSrv
+TCapt
+TAppl
+TCoor
+TCSrvCTL
+TWrapperSQL
+
+The main component of TCapture is the Replication Server. This is a java program which mainly coordinates varous modules.
+TCApt The Producer reads the recovery logs for changed source data and writes the changes to queues.
+TAppl The Consumer retrieves captured changes from queues and writes the changes to targets.
+TCoor Queue managment is is automatized in TCoor module
+TMoni monitoring module of
+TCSrvCTL API Command Tool to configure,setup,manage,
+TWrapperSQL  execute sql on the master node avoiding the scan of related DML , not inserted in replicated queues
+
+
+<< Getting and Installing >>
+-Prerequisites:
+-git
+- conf node
+- setup producer
+- setup consumer
+
+
+prerequisite :
+	Platforms: CentOS, 64-bit - Red Hat Enterprise Linux (RHEL), 64-bit
+	Database: The database versions that can be managed by TCapture Replication Server as a producer or consumer databases are the following:  PostgreSQL versions 9.6,10, and 11
+	Software: Java Runtime Environment (JRE) version 1.8. Any Java product such as Oracle® Java or OpenJDK may be used.
+
+	git clone https://github.com/lab-sb/tcapture_dev.git
+
+as root:
+	execute install.sh under TCapture software folder (cd tcapture_dev  directory)
+	./install.sh  #cover the following steps:
+
+		- set variable RDBBDR HOME in .rdbbdr_env.sh
+		- soruce environment file .rdbbdr_env.sh
+		- installing TCapture logical decoding library under /usr/pgsql-10/lib
+
+
+conf node
+sh bin/TC_srvctl.sh --config --type producer --node weby --host edslab-qbodb --port 5434 --user  statusr --passwd statpwd --db weby -rhost edslab-qiqdb --ruser postgres --rpasswd grespost  -rport 5432
+
+setup producer
+bin/TC_srvctl.sh --setup --node weby --type producer
+
+setup consumer
+sh bin/TC_srvctl.sh --setup --node webx --type consumer  --producer weby
+
+run
+Run TCRepSrv primary
+
+sh bin/runTCRepSrv.sh -n weby
+
+
+<< Monitoring >>
+
+<< TCSrvCTL >>
+sh bin/TC_srvctl.sh --help
+Launching..
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+usage: TCSrvCTL
+Configure a node. --config      --node --type [producer/consumer] --host --port --user --passwd --db --rhost --ruser  --rport --rpasswd
+Show node config. --showconf    --node --type [producer/consumer/monitor]
+Setup a node    . --setup       --node --type [producer/consumer]  [--producer] [--force]
+Unset a node    . --unset       --node --type [producer/consumer]  [--producer] [--force]
+Enable a node   . --enable      --node --type [producer/consumer/moniotr] [--producer]
+Disable a node  . --disable     --node --type [producer/consumer/monitor] [--producer]
+Start a node    . --start       --node --type [producer/consumer/monitor] [--producer]
+Stop  a node    . --stop                --node --type [producer/consumer/monitor] [--producer]
+Show status node. --status      --node --type [producer/consumer/monitor]
+Move a  marker  . --marker    --node --type consumer --producer  [--next_xid/--set_xid=<xid number>])
+Show topology   . --topology  --node [--detail]
+Shutdown TCRSrv . --shutdown  --node
+Print help messg. --help
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+usage: Parameters explanation:
+    --config           Configure a node
+    --db <arg>         Database for replication
+    --detail           Show Mesh Topology more details
+    --disable          Disable a node at startup of TCRepSrv
+    --enable           Enable a node at startup of TCRepSrv
+    --force            Force setup a node
+    --help             Print this help message.
+    --host <arg>       Host server
+    --marker           Move marker to next/given xid for a consumer
+    --next_xid         Set marker to a next xid
+    --node <arg>       Node name
+    --passwd <arg>     User password
+ecc.....
+
+
+<< Performance >>
+
+The setup was as follows:  PostgreSQL servers hosted in virtual data centers located in Milan, New York, London and HongKong.
+On  each a primary databases were created, each containing the same tables.
+These tables were then replicated  in a multi master solution, each primary node replicate on the other three slave databases.
+The maximum sustained throughput was then measured for each of these replication systems .
+The results: with TCapture, a maximum of 500 transactions per second (end to end) could be replicated before latency started to increase.
+
+<<  Multithread Edition  >>
+TWorkP
+TWorkC
+TDispC
+TCleanW
+
+
+<< Sampe Conf file >>
+ conf/e4p_rdb_bdr.conf
+
+rhost=edslab_host_1
+filter=false
+port=5432
+node=e4p
+walqtrunc=9
+rport=5433
+loglevel=OFF
+user=statusr
+ruser=dbrepusr
+pwd=statpwd
+batch_size=500
+log_hist=false
+rdb=rdb_db__e4p
+rpwd=dbreppwd
+host=edslab_host_prod
+db=edslabdb
+workpthread=4
+workcthread=4
+xidmax=100
+maplimit=1000
+
+
+<< Limitations >>
+
+following features are not available:
+    Management User Interface
+	Column level filtering
+	Update/Update and Insert/Insert conflict management
+	Enhanced cluster-wide
+	monitoring
+	Windows Server support
+
+performance consideration
+SQL DML command size (2G) - ( hardly a dml exceeds text limit )
+Truncation of walq_xxx tables (deprecated limitations since automatic queues management is now in develop edition 1.0-BETA)
+
+
