@@ -10,7 +10,7 @@ This is version TCapture Replication Server Dev Edition Beta 1.0
 COPYRIGHT:
 ----------
 
-    Copyright (c) 2019-2022  silvio.brandani <support@tcapture.net>. All rights reserved.
+    Copyright (c) 2019-2022  silvio.brandani <mktg.tcapture@gmail.com>. All rights reserved.
 
 
 REQUIREMENTS:
