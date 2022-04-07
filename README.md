@@ -66,4 +66,4 @@ To follow or participate in the development of TCapture, use:
 GETTING HELP:
 -------------
 
-For general questions and troubleshooting, please use mktg.ide@gmail.com
+For general questions and troubleshooting, please use mktg.tcapture@gmail.com
