@@ -21,7 +21,6 @@ DROP EVENT TRIGGER IF EXISTS  sqldrop_event_trigger;
 #
 SET default_tablespace = '';
 #
-SET default_with_oids = false;
 
 CREATE OR REPLACE FUNCTION dba.hex2dec(text) RETURNS bigint
     LANGUAGE sql

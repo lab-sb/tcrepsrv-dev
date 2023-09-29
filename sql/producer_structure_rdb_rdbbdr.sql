@@ -48,7 +48,6 @@ CREATE SEQUENCE IF NOT EXISTS _rdb_bdr.walq__master_wid_seq
 #
 SET default_tablespace = '';
 #
-SET default_with_oids = true;
 #
 
 CREATE TABLE IF NOT EXISTS _rdb_bdr.walq__master_xid (
@@ -79,7 +78,6 @@ CREATE TABLE IF NOT EXISTS _rdb_bdr.walq__master (
 #
 --ALTER TABLE _rdb_bdr.walq__master OWNER TO rdbbdr_user;
 #
-SET default_with_oids = false;
 #
 CREATE TABLE IF NOT EXISTS _rdb_bdr.walq__master_filtro (
     schemaf character varying(30) NOT NULL,
@@ -172,7 +170,6 @@ CREATE TABLE IF NOT EXISTS _rdb_bdr.tc_monit
 --ALTER TABLE _rdb_bdr.tc_monit
  --   OWNER to rdbbdr_user;
 #
-SET default_with_oids = false;
 #
 --ALTER TABLE _rdb_bdr.walq__master_xid OWNER TO rdbbdr_user;
 #

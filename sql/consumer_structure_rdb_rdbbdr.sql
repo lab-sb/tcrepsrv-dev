@@ -17,7 +17,6 @@ CREATE SCHEMA IF NOT EXISTS _rdb_bdr;
 #
 SET default_tablespace = '';
 #
-SET default_with_oids = false;
 
 DROP EVENT TRIGGER IF EXISTS  ddl_event_trigger;
 DROP EVENT TRIGGER IF EXISTS  sqldrop_event_trigger;

@@ -46,16 +46,6 @@ To install this module type the following:
 			6-cp ./rdbbdr/lib/rdb_decoder/rdblogdec.so /usr/pgsql-10/lib/
 
 
-EXAMPLES:
----------
-
-See  https://www.tcapture.net/docs for some examples.
-
-WEBSITE:
--------
-
-Please visit https://www.tcapture.net for complete documentation.
-
 DEVELOPMENT:
 ------------
 
