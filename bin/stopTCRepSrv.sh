@@ -66,6 +66,17 @@ do
 	fi
 done
 
+isRunning=$(ps -aef --forest|grep -v grep|grep -v  statusTCRepSrv |grep "TCRepSrv -n ${NODEMST}"|wc -l)
+
+if [ $isRunning -gt 0 ]
+then
+	ps -ef|grep java|grep com.edslab.TCRepSrv|grep "TCRepSrv -n ${NODEMST}"|grep -v grep |awk '{print "kill -9 " $2}'|sh
+                if [ $(ps -ef|grep java|grep com.edslab.TCRepSrv|grep "TCRepSrv -n ${NODEMST}"|grep -v grep| wc -l) -eq 0 ]
+                then
+                        echo "TC Replication Server process killed !!"
+                fi
+fi
+
 
 echo " Node " $NODEMST " shutdown !!"
 exit 0

@@ -44,6 +44,22 @@ if [ $RUNTC -gt 0 ] ; then
 fi
 
 
+FILE="$RDBBDR/conf/${NODEMST}_rdb_bdr.conf"
+if ! [ -f "$FILE" ]; then
+    echo "Configuration file $FILE for master node ${NODEMST} NOT exists."
+	
+   FILE2="$RDBBDR/conf/${NODEMST}_bdr_rdb.conf"
+	if ! [ -f "$FILE2" ]; then
+           echo "Configuration file $FILE2 for slave node ${NODEMST} NOT exists."
+           exit -1
+        else
+	  echo "Configuration file $FILE2 for slave node ${NODEMST} exists, copying into $FILE "
+	  cp $RDBBDR/conf/${NODEMST}_bdr_rdb.conf $RDBBDR/conf/${NODEMST}_rdb_bdr.conf
+	fi
+fi
+
+read A
+
 echo "export NODEMST=$NODEMST" >  $RDBBDR/.current_master
 . $RDBBDR/.current_master
 
