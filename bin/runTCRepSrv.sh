@@ -58,7 +58,6 @@ if ! [ -f "$FILE" ]; then
 	fi
 fi
 
-read A
 
 echo "export NODEMST=$NODEMST" >  $RDBBDR/.current_master
 . $RDBBDR/.current_master
