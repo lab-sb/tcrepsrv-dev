@@ -271,4 +271,4 @@ performance consideration
 SQL DML command size (2G) - ( hardly a dml exceeds text limit )
 Truncation of walq_xxx tables (deprecated limitations since automatic queues management is now in develop edition 1.0-BETA)
 
-miotest
+miotesttest
