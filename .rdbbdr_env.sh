@@ -1,1 +1,2 @@
-export RDBBDR=/var/lib/pgsql/scripts/mycode/tcapture_dev
+export RDBBDR=$(pwd)
+echo "set RDBBDR to be:"$RDBBDR
