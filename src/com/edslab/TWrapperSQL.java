@@ -1,7 +1,8 @@
 /**
- * # -- Copyright (c) 2018-2022  silvio.brandani <support@tcapture.net>. All rights reserved.
- *
- */
+    *  Copyright (c) 2022-2023
+    *  Silvio Brandani <mktg.tcapture@gmail.com>. All rights reserved.
+ **/
+
 
 package com.edslab;
 
