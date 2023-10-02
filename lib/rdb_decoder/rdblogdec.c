@@ -5,7 +5,7 @@
  * The implementation is an extension of code https://github.com/michaelpq/pg_plugins/tree/main/decoder_raw
  *
  * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
- * Portions Copyright (c) 2022-2023, silvio.brandani <support@tcapture.net>.
+ * Portions Copyright (c) 2022-2023, Silvio Brandani <support@tcapture.net>.
  *
  * IDENTIFICATION
  *                rdb_bdr/rdblogdec.c
