@@ -1,4 +1,4 @@
-# tcapture_dev
+# tcrepsrv-dev
 
 TCapture - Postgresql Multi-Master Database Replication Server
 
@@ -10,7 +10,7 @@ This is version TCapture Replication Server Dev Edition Beta 1.0
 COPYRIGHT:
 ----------
 
-    Copyright (c) 2019-2022  silvio.brandani <mktg.tcapture@gmail.com>. All rights reserved.
+    Copyright (c) 2019-2022  silvio.brandani <support@tcapture.net>. All rights reserved.
 
 
 REQUIREMENTS:
@@ -26,10 +26,10 @@ INSTALLATION:
 
 To install this module type the following:
 
-	git clone https://github.com/lab-sb/tcapture_dev.git
+	git clone https://github.com/lab-sb/tcrepsrv-dev.git
 
 	as root:
-		execute install.sh under TCapture software folder (cd tcapture_dev  directory)
+		execute install.sh under TCapture software folder (cd tcrepsrv-dev  directory)
 		./install.sh  #cover the following steps:
 
 			- set variable RDBBDR HOME in .rdbbdr_env.sh
@@ -46,14 +46,24 @@ To install this module type the following:
 			6-cp ./rdbbdr/lib/rdb_decoder/rdblogdec.so /usr/pgsql-10/lib/
 
 
+EXAMPLES:
+---------
+
+See  https://www.tcapture.net/docs for some examples.
+
+WEBSITE:
+-------
+
+Please visit https://www.tcapture.net for complete documentation.
+
 DEVELOPMENT:
 ------------
 
 To follow or participate in the development of TCapture, use:
 
-	git clone git://github.com/lab-sb/tcapture_dev.git
+	git clone git://github.com/lab-sb/tcrepsrv-dev.git
 
 GETTING HELP:
 -------------
 
-For general questions and troubleshooting, please use mktg.tcapture@gmail.com
+For general questions and troubleshooting, please use support@tcapture.net
