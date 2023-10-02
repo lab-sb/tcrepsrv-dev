@@ -1,0 +1,1041 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Quickstart &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="TCapture Prerequisites" href="prerequisit.html" />
+    <link rel="prev" title="TCapture Naming Convention" href="namingconvention.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="prerequisit.html" title="TCapture Prerequisites"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="namingconvention.html" title="TCapture Naming Convention"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="quickstart">
+<span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<p>First, complete the <a class="reference internal" href="installation.html#installation"><em>TCapture Installation</em></a> process.</p>
+<div class="section" id="tutorial-tcapture">
+<h2>Tutorial TCapture<a class="headerlink" href="#tutorial-tcapture" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Learn how to use the T-Capture technology to replicate data over tables queues.</dt>
+<dd>This tutorial explains how to set up and run T-Capture Replication Server .</dd>
+</dl>
+</div>
+<div class="section" id="learning-objectives">
+<h2>Learning objectives<a class="headerlink" href="#learning-objectives" title="Permalink to this headline">¶</a></h2>
+<p>After you complete this tutorial, you will know how to:</p>
+<blockquote>
+<div><p>Create and use replication slot over logical decoding rdblogdec , queues tables, and publication/subscription.</p>
+<p>Enable a Postgresql database for replication.</p>
+<p>Set up and operate the T Capture and T Apply programs.</p>
+<p>Configure the T Capture and T Apply programs to use the queues.</p>
+<p>Create a TCapture subscription to map a source table to a target table.</p>
+</div></blockquote>
+</div>
+<div class="section" id="test-table-definition">
+<h2>Test table definition<a class="headerlink" href="#test-table-definition" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sql"><pre>prd_db=# create table prova (aa serial, ab varchar(20) default 'prd' , ac timestamp default now(), ad bigint default txid_current());
+prd_db=# alter table prova add primary key (aa,ab);
+
+qas_db=# create table prova (aa serial, ab varchar(20) default 'qas' , ac timestamp default now(), ad bigint default txid_current());
+qas_db=# alter table prova add primary key (aa,ab);
+
+prd_db=# insert into prova (ab) values ('first');
+prd_db=# insert into prova (aa) select generate_series(max(aa)+1, max(aa)+1)  from prova;
+prd_db=# \watch -n1
+
+qas_db=# insert into prova (aa) select generate_series(max(aa)+1, max(aa)+1)  from prova;
+qas_db=# \watch -n1</pre>
+</div>
+</div>
+<div class="section" id="steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork">
+<h2>Steps to configure a mmr between 2 nodes in vdc located on milan and newyork<a class="headerlink" href="#steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>-- milan        host <span class="o">(</span>milhost<span class="o">)</span> db mil_db node mila
+-- newyork      host <span class="o">(</span>nychost<span class="o">)</span> db nyc_db node nyci
+</pre></div>
+</div>
+<ul class="simple">
+<li>deploy tc custom logical decoder to PGSQL lib</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:cp ./lib/rdb_decoder/rdblogdec.so /usr/pgsql-10/lib/rdblogdec.so
+</pre></div>
+</div>
+<ul class="simple">
+<li>add to postgresql.conf</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">wal_level</span> <span class="o">=</span> logical
+<span class="nv">max_wal_senders</span> <span class="o">=</span> 10            <span class="c"># max number of walsender processes</span>
+<span class="nv">max_replication_slots</span> <span class="o">=</span> 18
+<span class="nv">track_commit_timestamp</span> <span class="o">=</span> on
+</pre></div>
+</div>
+<ul class="simple">
+<li>reload</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:pg_ctl stop -D /var/lib/pgsql/10/data/ -m immediate; pg_ctl start -D /var/lib/pgsql/10/data/
+</pre></div>
+</div>
+<ul class="simple">
+<li>uncompress TCRepSrv sw</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:tar -zxvf tcrepsrv-0.9.1.rhel7.x86_64.tar.gz
+
+milhost:cd rdbdbr
+</pre></div>
+</div>
+<ul class="simple">
+<li>edit .rdbbdr_env.sh</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>adapt line to your path <span class="nb">export </span><span class="nv">RDBBDR</span><span class="o">=</span>/var/lib/pgsql/scripts/mycode/rdbbdr
+</pre></div>
+</div>
+<p>source it</p>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:. .rdbbdr_env.sh
+milhost:echo <span class="nv">$RDBBDR</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>create replication user</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>create user : create user rdbbdr_user  superuser inherit login password <span class="s1">&#39;rdbbdr_pwd&#39;</span>;
+</pre></div>
+</div>
+<ul class="simple">
+<li>database containing replication tables structures</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>create database rdb_db__mila;
+</pre></div>
+</div>
+<ul class="simple">
+<li>add a primary node mila (ie milan location)</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:sh bin/TC_srvctl.sh --config --type producer --node mila --host milhost --port 5432 --user rdbbdr_user --passwd rdbbdr_pwd --db mil_db -rhost milhost --ruser postgres --rpasswd apwd -rport 5432
+</pre></div>
+</div>
+<p>this will create the
+a)_rdb_bdr schema structure on master mila
+b) replication slot rdb_mila_bdr on mil_db
+c) parameter file for node mila under $RDBBDR/conf/mila_rdb_bdr.conf
+d) mila_publ</p>
+<ul class="simple">
+<li>do the same on newyork host</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost:sh bin/TC_srvctl.sh --config --type producer --node nyci --host nychost --port 5432 --user rdbbdr_user --passwd rdbbdr_pwd --db nyc_db -rhost nychost --ruser postgres --rpasswd apwd -rport 5432
+</pre></div>
+</div>
+<ul class="simple">
+<li>add a remote primary node conf</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost: sh bin/TC_srvctl.sh --config --type consumer --node mila --host milhost --port 5432 --user rdbbdr_user --passwd rdbbdr_pwd --db mil_db -rhost milhost --ruser postgres --rpasswd apwd -rport 5432
+</pre></div>
+</div>
+<p>this will populate the parameter file for remote node nyci</p>
+<p>do the same in milan for remote primary nyci</p>
+<div class="highlight-sh"><div class="highlight"><pre>milhost: sh bin/TC_srvctl.sh --config --type consumer --node nyci --host nychost --port 5432 --user rdbbdr_user --passwd rdbbdr_pwd --db nyc_db -rhost nychost --ruser postgres --rpasswd apwd -rport 5432
+</pre></div>
+</div>
+<ul class="simple">
+<li>we can setup producer mila</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost: bin/TC_srvctl.sh --setup --node mila --type producer
+</pre></div>
+</div>
+<ul class="simple">
+<li>we can setup producer nyci</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost: bin/TC_srvctl.sh --setup --node nyci --type producer
+</pre></div>
+</div>
+<ul class="simple">
+<li>we can now join the remote node (ie became a slave for the specified nyci)</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost: bin/TC_srvctl.sh --setup --node mila --type consumer --producer nyci
+</pre></div>
+</div>
+<ul class="simple">
+<li>and can now join the remote node (ie became a slave for the specified mila)</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost: bin/TC_srvctl.sh --setup --node nyci --type consumer --producer mila
+</pre></div>
+</div>
+<p>this will create the
+a) mila_subs_nyci and mila_publ_nyci slot for nyci subscription
+a) nyci_subs_mila and nyci_publ_mila slot for mila subscription</p>
+<p>we are ready to run T-Capture program on each master:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nb">export </span><span class="nv">NODEMST</span><span class="o">=</span>nyci
+sh bin/runTCRepSrv.sh -n nyci
+</pre></div>
+</div>
+<p>running for node: nyci</p>
+<div class="highlight-sh"><div class="highlight"><pre>Logging startup messages to : TCapture_nyci_2019-06-20-08:58:01.log
+
+press a to tail the log :
+
+/var/lib/pgsql/scripts/mycode/rdbbdr/log/nyci_rdb_bdr.log
+
+<span class="o">[</span>2019-06-20 09:00:29 462<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Start logging
+<span class="o">[</span>2019-06-20 09:00:29 947<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Queue XID at restart: 9855220
+<span class="o">[</span>2019-06-20 09:00:29 960<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Xlog Position: LSN<span class="o">{</span>9/D9BEA30<span class="o">}</span>
+<span class="o">[</span>2019-06-20 09:00:29 961<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Xlog Current : LSN<span class="o">{</span>9/1363D360<span class="o">}</span>
+<span class="o">[</span>2019-06-20 09:00:29 962<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Slot Name: rdb_nyci_bdr
+<span class="o">[</span>2019-06-20 09:00:29 962<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span>  Check LSn from stream &gt; LSn from queue  9/D9BEA30 vs 9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:29 963<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> LESS - stay in the loop9/D9BEA30-9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:30 068<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span>  Check LSn from stream &gt; LSn from queue  9/1363BAB8 vs 9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:30 068<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span>  ok go on :9/1363BAB8-9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:30 070<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> ----------------------------------------------------------------------------------------------------------------------------------------------
+<span class="o">[</span>2019-06-20 09:00:30 088<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> &lt;Begin Txid&gt; :9855480 &lt;LSN&gt; :9/1363BAB8
+</pre></div>
+</div>
+<ul class="simple">
+<li>stop replication</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/stopTCRepSrv.sh -n nyci
+
+postgres 62992 62990  0 Jun17 ?        00:07:01 /usr/java/jdk1.8.0_201-amd64/bin/java -cp ../lib/postgresql-42.2.19.jar:../pgjdbc/pgjdbc/src/:. com.edslab.RunWal
+</pre></div>
+</div>
+</div>
+<div class="section" id="a-full-example">
+<h2>A full example<a class="headerlink" href="#a-full-example" title="Permalink to this headline">¶</a></h2>
+<p>&#8211;preparation</p>
+<div class="highlight-sh"><div class="highlight"><pre>postgres@hostxx-adbdb.edslab.it
+
+pg_ctl start -D 10/data/weby
+
+10/data/weby/postgresql.conf
+
+<span class="nv">max_replication_slots</span> <span class="o">=</span> 10
+<span class="nv">max_wal_senders</span> <span class="o">=</span> 10
+<span class="c">###shared_preload_libraries = &#39;pglogical&#39;</span>
+<span class="nv">track_commit_timestamp</span> <span class="o">=</span> on <span class="c"># 9.5+ only</span>
+<span class="nv">wal_level</span><span class="o">=</span> logical
+
+10/data/weby/pg_hba.conf
+
+pg_dump -p 5433 webx -Fc --schema-only -v &gt; webx-schema.dmp
+
+pg_dumpall -p 5433 -g &gt; webx-globals.dmp
+
+psql -p 5434 &lt; webx-globals.dmp
+
+pg_restore -p 5434 -Fc -d weby webx-schema.dmp
+
+vacuumdb --all --analyze-in-stages
+</pre></div>
+</div>
+<p>&#8211;configure</p>
+<div class="highlight-sh"><div class="highlight"><pre>hostxx-bdbdb.edslab.it
+
+sh bin/TC_srvctl.sh --config --type producer --node weby --host hostxx-adbdb --port 5434 --user statusr --passwd statpwd --db weby -rhost hostxx-bdbdb --ruser postgres --rpasswd grespost -rport 5432
+</pre></div>
+</div>
+<p>&#8211;setup producer</p>
+<div class="highlight-sh"><div class="highlight"><pre>bin/TC_srvctl.sh --setup --node weby --type producer
+</pre></div>
+</div>
+<p>&#8211;Setup consumer</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --setup --node webx --type consumer --producer weby
+</pre></div>
+</div>
+<p>&#8211;Run TCRepSrv primary</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/runTCRepSrv.sh -n weby
+</pre></div>
+</div>
+<p>&#8211;Primary Db</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">weby</span><span class="o">=</span><span class="c"># select * from pg_replication_slots ;</span>
+slot_name | plugin | slot_type | datoid | database | temporary | active | active_pid | xmin | catalog_xmin | restart_lsn | confirmed_flush_lsn
+--------------+-----------+-----------+--------+----------+-----------+--------+------------+------+--------------+-------------+---------------------
+rdb_weby_bdr | rdblogdec | logical | 33403 | weby | f | f | | | 26118 | 0/76D9840 | 0/76D99A8
+</pre></div>
+</div>
+<p>&#8211;dba.__events_ddl</p>
+<div class="highlight-sh"><div class="highlight"><pre>weby-# ;
+ddl_id | wal_lsn | wal_txid | ddl_user | ddl_object | ddl_type | ddl_command | creation_timestamp
+--------+-----------+----------+----------+---------------------+----------+-------------+-------------------------------
+1 | 0/76CD1E0 | 25992 | statusr | weby | MASTER | CREATE NODE | 2021-03-17 16:00:54.089933+01
+-1 | 0/76D9A68 | 26120 | statusr | NO_ACTIVITY_LSN_ACK | DML | UPSERT | 2021-03-17 16:09:18.436825+01
+</pre></div>
+</div>
+<p>&#8211;Primary DB RDB</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="o">[</span> 14:06:11 Thu Mar 18 <span class="o">]</span> <span class="o">[</span> postgres@hostxx-bdbdb.edslab.it <span class="o">]</span> <span class="o">[</span> ~ <span class="o">]</span>
+<span class="o">(</span>1001<span class="o">)</span><span class="nv">$ </span>psql -p 5432
+<span class="nv">rdb_db__weby</span><span class="o">=</span><span class="c"># \dt _rdb_bdr.</span>
+</pre></div>
+</div>
+<p>&#8211;List of relations</p>
+<div class="highlight-sh"><div class="highlight"><pre>Schema | Name | Type | Owner
+----------+-------------------+-------+----------
+_rdb_bdr | tc_event_ddl | table | postgres
+_rdb_bdr | tc_monit | table | postgres
+_rdb_bdr | tc_process | table | postgres
+_rdb_bdr | walq__weby | table | postgres
+_rdb_bdr | walq__weby_0 | table | postgres
+_rdb_bdr | walq__weby_1 | table | postgres
+_rdb_bdr | walq__weby_2 | table | postgres
+_rdb_bdr | walq__weby_filtro | table | postgres
+_rdb_bdr | walq__weby_log | table | postgres
+_rdb_bdr | walq__weby_mon | table | postgres
+_rdb_bdr | walq__weby_offset | table | postgres
+_rdb_bdr | walq__weby_xid | table | postgres
+_rdb_bdr | walq__weby_xid_0 | table | postgres
+_rdb_bdr | walq__weby_xid_1 | table | postgres
+_rdb_bdr | walq__weby_xid_2 | table | postgres
+</pre></div>
+</div>
+<p>_rdb_bdr.tc_process</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__weby</span><span class="o">=</span><span class="c"># table;</span>
+n_id | n_name | n_shouldbe | n_state | n_operation | n_type | n_mstr | n_dateop | n_datecrea | n_pid
+------+--------+------------+----------+-------------+--------+--------+----------------------------+----------------------------+-------
+0 | weby | up | shutdown | managed | C | weby | 2021-03-17 15:09:11.440533 | 2021-03-17 15:00:47.49168 | 99320
+0 | weby | up | shutdown | managed | M | weby | 2021-03-17 15:09:12.44276 | 2021-03-17 15:00:47.492616 | 366
+0 | weby | up | shutdown | managed | H | weby | 2021-03-17 15:09:13.445581 | 2021-03-17 15:00:47.493022 | 99194
+<span class="o">(</span>3 rows<span class="o">)</span>
+</pre></div>
+</div>
+<p>&#8211;Primary RDB Publication</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__weby</span><span class="o">=</span><span class="c"># \dRp+</span>
+Publication weby_publ
+Owner | All tables | Inserts | Updates | Deletes
+----------+------------+---------+---------+---------
+postgres | f | t | f | f
+Tables:
+<span class="s2">&quot;_rdb_bdr.walq__weby_0&quot;</span>
+<span class="s2">&quot;_rdb_bdr.walq__weby_1&quot;</span>
+<span class="s2">&quot;_rdb_bdr.walq__weby_2&quot;</span>
+</pre></div>
+</div>
+<p>&#8211;Primary RDB Server replication slots</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__weby</span><span class="o">=</span><span class="c"># select * from pg_replication_slots ;</span>
+slot_name | plugin | slot_type | datoid | database | temporary | active | active_pid | xmin | catalog_xmin | restart_lsn | confirmed_flush_lsn
+----------------+----------+-----------+-----------+--------------+-----------+--------+------------+------+--------------+-------------+---------------------
+webp_publ_webx | pgoutput | logical | 75365 | rdb_db__webp | f | t | 20203 | | 15484548 | 2B/C41BAFE0 | 2B/C41F5E18
+weby_publ_webx | pgoutput | logical | 158418762 | rdb_db__weby | f | t | 6353 | | 15484548 | 2B/C41BAFE0 | 2B/C41F5E18
+</pre></div>
+</div>
+<p>&#8211;Secondary Db</p>
+<div class="highlight-sh"><div class="highlight"><pre>dba.__events_ddl
+<span class="nv">webx</span><span class="o">=</span><span class="c"># table dba.__events_ddl</span>
+webx-# ;
+ddl_id | wal_lsn | wal_txid | ddl_user | ddl_object | ddl_type | ddl_command | creation_timestamp
+--------+---------------+------------+----------+---------------------+----------+-------------+-------------------------------
+-1 | 150/C3200920 | 2398631719 | statusr | NO_ACTIVITY_LSN_ACK | DML | UPSERT | 2021-03-17 16:02:00.505278+01
+48 | 150/C320BAF0 | 11211039 | postgres | webx&lt;-weby | SLAVE | CREATE NODE | 2021-03-17 16:02:00.518704+01
+</pre></div>
+</div>
+<p>&#8211;Secondary DB RDB</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># \dt _rdb_bdr.</span>
+</pre></div>
+</div>
+<p>&#8211; List of relations</p>
+<div class="highlight-sh"><div class="highlight"><pre>List of relations
+Schema | Name | Type | Owner
+----------+----------------------+-------+----------
+_rdb_bdr | tc_event_ddl | table | postgres
+_rdb_bdr | tc_monit | table | postgres
+_rdb_bdr | tc_process | table | postgres
+_rdb_bdr | walq__webp | table | postgres
+_rdb_bdr | walq__webp_4b57 | table | postgres
+_rdb_bdr | walq__webp_4b58 | table | postgres
+_rdb_bdr | walq__webp_4b59 | table | postgres
+_rdb_bdr | walq__webp_4b5a | table | postgres
+_rdb_bdr | walq__webp_cmanaged | table | postgres
+_rdb_bdr | walq__webp_conflicts | table | postgres
+_rdb_bdr | walq__webp_crules | table | postgres
+_rdb_bdr | walq__webp_filtro | table | postgres
+_rdb_bdr | walq__webp_log | table | postgres
+_rdb_bdr | walq__webp_offset | table | postgres
+_rdb_bdr | walq__weby | table | postgres
+_rdb_bdr | walq__weby_0 | table | postgres
+_rdb_bdr | walq__weby_1 | table | postgres
+_rdb_bdr | walq__weby_2 | table | postgres
+_rdb_bdr | walq__weby_conflicts | table | postgres
+_rdb_bdr | walq__weby_filtro | table | postgres
+_rdb_bdr | walq__weby_log | table | postgres
+_rdb_bdr | walq__weby_offset | table | postgres
+<span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># select * from pg_replication_slots ;</span>
+slot_name | plugin | slot_type | datoid | database | temporary | active | active_pid | xmin | catalog_xmin | restart_lsn | confirmed_flush_lsn
+-----------+--------+-----------+--------+----------+-----------+--------+------------+------+--------------+-------------+---------------------
+<span class="o">(</span>0 rows<span class="o">)</span>
+</pre></div>
+</div>
+<p>List of subscriptions</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># \dRs+</span>
+List of subscriptions
+Name | Owner | Enabled | Publication | Synchronous commit | Conninfo
+----------------+----------+---------+-------------+--------------------+---------------------------------------------------------------------------------------
+webx_subs_webp | postgres | t | <span class="o">{</span>webp_publ<span class="o">}</span> | off | <span class="nv">host</span><span class="o">=</span>hostxx-bdbdb.edslab.it <span class="nv">port</span><span class="o">=</span>5432 <span class="nv">user</span><span class="o">=</span>postgres <span class="nv">password</span><span class="o">=</span>xxx <span class="nv">dbname</span><span class="o">=</span>rdb_db__webp
+webx_subs_weby | postgres | t | <span class="o">{</span>weby_publ<span class="o">}</span> | off | <span class="nv">host</span><span class="o">=</span>hostxx-bdbdb <span class="nv">port</span><span class="o">=</span>5432 <span class="nv">user</span><span class="o">=</span>postgres <span class="nv">password</span><span class="o">=</span>xxx <span class="nv">dbname</span><span class="o">=</span>rdb_db__weby
+</pre></div>
+</div>
+<p>_rdb_bdr.tc_process;</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># table _rdb_bdr.tc_process;</span>
+n_id | n_name | n_shouldbe | n_state | n_operation | n_type | n_mstr | n_dateop | n_datecrea | n_pid
+------+--------+------------+---------+-------------+--------+--------+----------------------------+----------------------------+-------
+0 | webx | up | start | managed | S | webp | 2021-03-17 15:07:25.396114 | 2021-03-08 10:12:26.708807 | 10720
+1 | webx | up | stop | managed | S | weby | 2021-03-18 13:48:58.875954 | 2021-03-18 13:48:58.875954 | -1
+</pre></div>
+</div>
+<p>_rdb_bdr.walq__weby_offset;</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># table _rdb_bdr.walq__weby_offset;</span>
+src_topic_id | last_offset | xid_offset | lsn_offset | dateop
+--------------+-------------+------------+-------------+----------------------------
+webx | 0 | 0 | 2E/E16FA000 | 2021-03-17 15:01:54.067753
+</pre></div>
+</div>
+<p>Run TCRepSrv secondary</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/runTCRepSrv.sh -n webx
+Log Secondary
+INFO | 2021-03-18 13:50:35.199 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:129<span class="o">)</span> - ***********************************************************************
+INFO | 2021-03-18 13:50:35.200 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:130<span class="o">)</span> - Running TCapture Replication Server <span class="k">for </span>node :webx
+INFO | 2021-03-18 13:50:35.200 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:131<span class="o">)</span> - ***********************************************************************
+INFO | 2021-03-18 13:50:35.266 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:645<span class="o">)</span> - com.edslab.TCRepSrv is in running state
+INFO | 2021-03-18 13:50:35.279 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:404<span class="o">)</span> - Running consumer thread <span class="k">for </span>node slave: webx having master: webp and node id 0
+INFO | 2021-03-18 13:50:35.281 | <span class="o">[</span>main<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:554<span class="o">)</span> - Running TAppl consumer webx <span class="k">for </span>node webp
+INFO | 2021-03-18 13:50:35.284 | <span class="o">[</span>TA-webp<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:211<span class="o">)</span> - TA_webp_10820 is in running state
+INFO | 2021-03-18 13:50:35.285 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:404<span class="o">)</span> - Running consumer thread <span class="k">for </span>node slave: webx having master: weby and node id 1
+INFO | 2021-03-18 13:50:35.285 | <span class="o">[</span>main<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:554<span class="o">)</span> - Running TAppl consumer webx <span class="k">for </span>node weby
+INFO | 2021-03-18 13:50:35.288 | <span class="o">[</span>TA-weby<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:211<span class="o">)</span> - TA_weby_11259 is in running state
+INFO | 2021-03-18 13:50:35.305 | <span class="o">[</span>TA-weby<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:369<span class="o">)</span> - TA_weby_11259:Managing xid 26051
+INFO | 2021-03-18 13:50:35.312 | <span class="o">[</span>TA-webp<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:369<span class="o">)</span> - TA_webp_10820:Managing xid 2409993294
+INFO | 2021-03-18 13:50:35.324 | <span class="o">[</span>TA-weby<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:499<span class="o">)</span> - TA_weby_11259:Scanned: 1
+INFO | 2021-03-18 13:50:35.349 | <span class="o">[</span>TA-webp<span class="o">]</span> edslab.TAppl <span class="o">(</span>TAppl.java:369<span class="o">)</span> - TA_webp_10820:Managing xid 2409993293
+</pre></div>
+</div>
+<p>Topology for Secondary</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --topology --node webx --detail
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/webx_rdb_bdr.conf review
+Primary Database:
+node webx
+db webx
+host hostxx-adbdb.edslab.it
+port 5433
+user postgres
+<span class="nb">pwd </span>grespost
+RDB database:
+rnode null
+rdb rdb_db__webx
+rhost hostxx-bdbdb.edslab.it
+rport 5433
+ruser postgres
+rpwd grespost
+Thu Mar 18 13:59:21 UTC 2021
+---------- Show ReplSrvr <span class="k">for </span>node webx ----------
+Check Schema _rdb_bdr exist on db rdb_db__webx :true
+---------- Show Consumers <span class="k">for </span>node webx ----------
+---------- Show Producers <span class="k">for </span>node webx ----------
+Node webp is an enabled producer of webx since <span class="nb">enable </span>status is <span class="nb">true </span><span class="k">for </span>subscription <span class="s1">&#39;webx_subs_webp&#39;</span>
+Node weby is an enabled producer of webx since <span class="nb">enable </span>status is <span class="nb">true </span><span class="k">for </span>subscription <span class="s1">&#39;webx_subs_weby&#39;</span>
+</pre></div>
+</div>
+<p>Topology for primary</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --topology --node weby --detail
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/weby_rdb_bdr.conf review
+Primary Database:
+node weby
+db weby
+host hostxx-adbdb
+port 5434
+user statusr
+<span class="nb">pwd </span>statpwd
+RDB database:
+rnode null
+rdb rdb_db__weby
+rhost hostxx-bdbdb
+rport 5432
+ruser postgres
+rpwd grespost
+Thu Mar 18 14:00:32 UTC 2021
+---------- Show ReplSrvr <span class="k">for </span>node weby ----------
+Check Schema _rdb_bdr exist on db rdb_db__weby :true
+Node weby is a MASTER NODE since has a replication slot <span class="s1">&#39;rdb_weby_bdr&#39;</span> on its primary database
+Node weby have TCapture Replication Server running since active status is <span class="nb">true </span><span class="k">for </span>replication slot <span class="s1">&#39;rdb_weby_bdr&#39;</span>
+---------- Show Consumers <span class="k">for </span>node weby ----------
+Node webx is an active consumer of weby since active status is <span class="nb">true </span><span class="k">for </span>replication slot <span class="s1">&#39;weby_publ_webx&#39;</span>
+---------- Show Producers <span class="k">for </span>node weby ----------
+</pre></div>
+</div>
+<p>Monitor gap</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__weby</span><span class="o">=</span><span class="c"># select *, q_xid - xid_offset as gap from _rdb_bdr.tc_monit;</span>
+db_xid_last_committed | db_last_committed_dateop | wal_lsn | q_xid | q_dateop | q_lsn | state | check_dateop | n_mstr | n_slv | flushed_lsn | xid_offset | gap
+-----------------------+----------------------------+-----------+-------+--------------------------+-----------+-------+----------------------------+--------+-------+-------------+------------+-----
+| | 0/76FC168 | 26493 | 2021-03-18 14:03:15.6436 | 0/76FC168 | t | 2021-03-18 14:03:17.785988 | weby | webx | 2B/E9610B48 | 26493 | 0
+26496 | 2021-03-18 14:03:24.232896 | 0/76FC488 | 26493 | 2021-03-18 14:03:15.6436 | 0/76FC168 | t | 2021-03-18 14:03:17.77952 | weby | weby | 0/76FC238 | |
+</pre></div>
+</div>
+<p>Monitor xacts flusso</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="k">select </span>count<span class="o">(</span>*<span class="o">)</span> , xid from _rdb_bdr.walq__webp where wid &gt;<span class="o">=</span> <span class="o">(</span><span class="k">select </span>max<span class="o">(</span>wid<span class="o">)</span>-333 from _rdb_bdr.walq__webp<span class="o">)</span> group by xid;
+<span class="se">\w</span>atch –n1
+</pre></div>
+</div>
+<p>Monitor queue xid near offset</p>
+<div class="highlight-sh"><div class="highlight"><pre> Master weby
+
+<span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># select count(*),xid from _rdb_bdr.walq__weby where xid &gt;= (select xid_offset from _rdb_bdr.walq__weby_offset ) and xid &lt; (select xid_offset + 100 from _rdb_bdr.walq__weby_offset ) group by xid order by xid desc limit 40;</span>
+count | xid
+-------+-------
+1 | 26798
+</pre></div>
+</div>
+<div class="highlight-sh"><div class="highlight"><pre> Master webp
+
+<span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># select count(*),xid from _rdb_bdr.walq__webp where xid &gt;= (select xid_offset from _rdb_bdr.walq__webp_offset ) and xid &lt; (select xid_offset + 100 from _rdb_bdr.walq__webp_offset ) group by xid order by xid desc limit 40;</span>
+</pre></div>
+</div>
+<p>log verbose</p>
+<div class="highlight-sh"><div class="highlight"><pre>edit out/log4j2.xml
+
+da info ad all
+&lt;AppenderRef <span class="nv">ref</span><span class="o">=</span><span class="s2">&quot;rollingFile&quot;</span> <span class="nv">level</span><span class="o">=</span><span class="s2">&quot;all&quot;</span>/&gt;
+
+And re-cycle TCRepSrv
+
+1038<span class="o">)</span><span class="nv">$ </span>sh bin/stopTCRepSrv.sh -n weby
+Still Shutting down..
+Still Shutting down..
+Still Shutting down..
+Node weby shutdown !!
+<span class="o">[</span> ~/scripts/mycode/tcrepsrv-dev <span class="o">]</span>
+sh bin/stopTCRepSrv.sh -n weby
+Node weby not running
+<span class="o">[</span> ~/scripts/mycode/tcrepsrv-dev <span class="o">]</span>
+<span class="o">(</span>1039<span class="o">)</span><span class="nv">$ </span>sh bin/runTCRepSrv.sh -n weby
+</pre></div>
+</div>
+<p>Other examples</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="o">(</span>1054<span class="o">)</span><span class="nv">$ </span>sh bin/TC_srvctl.sh --config --type consumer --node weby --host hostxx-adbdb --port 5434 --user statusr --passwd statpwd --db weby -rhost hostxx-bdbdb --ruser postgres --rpasswd grespost -rport 5432
+Launching..
+rdbbdrconf:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/weby_bdr_rdb.conf
+<span class="o">[</span> 16:02:11 Thu Mar 18 <span class="o">]</span> <span class="o">[</span> postgres@hostxx-bdbdb.edslab.it <span class="o">]</span> <span class="o">[</span> ~/scripts/mycode/tcrepsrv-dev <span class="o">]</span>
+
+<span class="o">(</span>1055<span class="o">)</span><span class="nv">$ </span>sh bin/TC_srvctl.sh --setup --node weby --type consumer --producer webx
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/weby_bdr_rdb.conf review
+Primary Database:
+node weby
+db weby
+host hostxx-adbdb
+port 5434
+user statusr
+<span class="nb">pwd </span>statpwd
+RDB database:
+rnode null
+rdb rdb_db__weby
+rhost hostxx-bdbdb
+rport 5432
+ruser postgres
+rpwd grespost
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/webx_rdb_bdr.conf review
+Primary Database:
+node webx
+db webx
+host hostxx-adbdb.edslab.it
+port 5433
+user postgres
+<span class="nb">pwd </span>grespost
+RDB database:
+rnode webx
+rdb rdb_db__webx
+rhost hostxx-bdbdb.edslab.it
+rport 5433
+ruser postgres
+rpwd grespost
+&gt; Checking existance of database weby
+&lt; weby exists!
+&gt; Checking existance of database rdb_db__weby
+&lt; rdb_db__weby exists!
+&gt; Checking existance of schema _rdb_bdr in database weby
+&gt; Checking existance tables _rdb_bdr.walq__weby% in database weby exists!
+&gt; Checking existance tables _rdb_bdr.walq__webx% in database rdb_db__weby exists!
+&gt; Checking existance tables _rdb_bdr.walq__weby% in database rdb_db__weby exists!
+&lt; Schema _rdb_bdr tables walq__weby% in database rdb_db__weby exists!
+Do you wish to proceed anyway ? <span class="o">(</span>Y/N<span class="o">)</span>: Y
+skipping creation <span class="o">(</span>already exists<span class="o">)</span> on schema _rdb_bdr in database rdb_db__weby
+---------------------------------------------------------------------------------------
+You are going to <span class="nb">set </span>consumer node weby from producer webx
+Do you wish to proceed ? <span class="o">(</span>Y/N<span class="o">)</span>: Y
+&gt;&gt; Going to <span class="nb">set </span>node weby as consumer <span class="k">for </span>producer webx
+Check Schema _rdb_bdr exist on db weby :false
+--Going to create _rdb_bdr structure on database weby ..
+--Going to create _rdb_bdr structure on database rdb_db__weby ..
+--Going to create partitioned _rdb_bdr.walq__weby_XX tables on database rdb_db__weby ..
+Coordinate consumer weby slave of webx - Current WAL LSN:15A- NOT EXIST
+Coordinate consumer weby slave of webx - Current WAL LSN:15B- NOT EXIST
+Coordinate consumer weby slave of webx - Current WAL LSN:15C- NOT EXIST
+Coordinate consumer weby slave of webx - Current WAL LSN:15D- NOT EXIST
+--Going to create subscriptionweby_subs_webx on database rdb_db__weby ..
+</pre></div>
+</div>
+<p>Webx is master for weby and slave for webp and weby:</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --topology --node webx --detail
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/webx_rdb_bdr.conf review
+Primary Database:
+node webx
+db webx
+host hostxx-adbdb.edslab.it
+port 5433
+user postgres
+<span class="nb">pwd </span>grespost
+RDB database:
+rnode null
+rdb rdb_db__webx
+rhost hostxx-bdbdb.edslab.it
+rport 5433
+ruser postgres
+rpwd grespost
+Thu Mar 18 15:24:30 UTC 2021
+---------- Show ReplSrvr <span class="k">for </span>node webx ----------
+Check Schema _rdb_bdr exist on db rdb_db__webx :true
+Node webx is a MASTER NODE since has a replication slot <span class="s1">&#39;rdb_webx_bdr&#39;</span> on its primary database
+Node webx have TCapture Replication Server running since active status is <span class="nb">true </span><span class="k">for </span>replication slot <span class="s1">&#39;rdb_webx_bdr&#39;</span>
+---------- Show Consumers <span class="k">for </span>node webx ----------
+Node weby is an active consumer of webx since active status is <span class="nb">true </span><span class="k">for </span>replication slot <span class="s1">&#39;webx_publ_weby&#39;</span>
+---------- Show Producers <span class="k">for </span>node webx ----------
+Node webp is an enabled producer of webx since <span class="nb">enable </span>status is <span class="nb">true </span><span class="k">for </span>subscription <span class="s1">&#39;webx_subs_webp&#39;</span>
+Node weby is an enabled producer of webx since <span class="nb">enable </span>status is <span class="nb">true </span><span class="k">for </span>subscription <span class="s1">&#39;webx_subs_weby&#39;</span>
+
+Node is running?
+</pre></div>
+</div>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/statusTCRepSrv.sh -n webx
+
+postgres 17831 17786 9 15:56 pts/0 00:03:12 <span class="se">\_</span> /bin/java -XX:-UsePerfData -Xms1024m -Xmx4096m -XX:ErrorFile<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/log/repserver_pid_%p.log -Djava.library.path<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/bin -Duser.timezone<span class="o">=</span>UTC -Djava.awt.headless<span class="o">=</span><span class="nb">true</span> -Dlog4j2.contextSelector<span class="o">=</span>org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -cp /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/disruptor-3.3.0.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-core-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-api-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/postgresql-42.2.19.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/commons-cli-1.4.jar:. com.edslab.TCRepSrv -n webx
+Listing running TCRepSrv program <span class="k">for </span>all..
+postgres 6825 1 0 Mar16 ? 00:00:00 sh bin/runTCRepSrv.sh -n webp
+postgres 6871 6825 3 Mar16 ? 01:48:47 <span class="se">\_</span> /bin/java -XX:-UsePerfData -Xms1024m -Xmx4096m -XX:ErrorFile<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/log/repserver_pid_%p.log -Djava.library.path<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/bin -Duser.timezone<span class="o">=</span>UTC -Djava.awt.headless<span class="o">=</span><span class="nb">true</span> -Dlog4j2.contextSelector<span class="o">=</span>org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -cp /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/disruptor-3.3.0.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-core-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-api-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/postgresql-42.2.19.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/commons-cli-1.4.jar:. com.edslab.TCRepSrv -n webp
+postgres 17786 1 0 15:56 pts/0 00:00:00 sh bin/runTCRepSrv.sh -n webx
+postgres 17831 17786 9 15:56 pts/0 00:03:13 <span class="se">\_</span> /bin/java -XX:-UsePerfData -Xms1024m -Xmx4096m -XX:ErrorFile<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/log/repserver_pid_%p.log -Djava.library.path<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/bin -Duser.timezone<span class="o">=</span>UTC -Djava.awt.headless<span class="o">=</span><span class="nb">true</span> -Dlog4j2.contextSelector<span class="o">=</span>org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -cp /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/disruptor-3.3.0.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-core-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-api-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/postgresql-42.2.19.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/commons-cli-1.4.jar:. com.edslab.TCRepSrv -n webx
+postgres 3222 1 0 16:10 pts/0 00:00:00 sh bin/runTCRepSrv.sh -n weby
+postgres 3269 3222 1 16:10 pts/0 00:00:19 <span class="se">\_</span> /bin/java -XX:-UsePerfData -Xms1024m -Xmx4096m -XX:ErrorFile<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/log/repserver_pid_%p.log -Djava.library.path<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/bin -Duser.timezone<span class="o">=</span>UTC -Djava.awt.headless<span class="o">=</span><span class="nb">true</span> -Dlog4j2.contextSelector<span class="o">=</span>org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -cp /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/disruptor-3.3.0.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-core-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-api-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/postgresql-42.2.19.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/commons-cli-1.4.jar:. com.edslab.TCRepSrv -n weby
+</pre></div>
+</div>
+<p>TWrapperSQL</p>
+<p>&#8211;how execute sql script on a master node should not flow in queue</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/runTWrapperSQL.sh -n webx -s /tmp/script.sql
+Logging startup messages to : TWrapperSQL_webx_2021-03-18-16:38:32.log
+Launching..
+webx
+/tmp/script.sql
+walq _rdb_bdr.walq__webx
+main:Commmit curxid:12437855
+<span class="nv">rdb_db__webx</span><span class="o">=</span><span class="c"># select * from _rdb_bdr.walq__webx_xid where xid_from_queue=-1;</span>
+xid_from_queue | xid_current | lsn | dateop
+----------------+-------------+--------------+----------------------------
+-1 | 12437855 | 15B/A6AF1190 | 2021-03-18 15:38:32.82496
+</pre></div>
+</div>
+<p>TCSrvCTL</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --help
+Launching..
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+usage: TCSrvCTL
+Configure a node. --config --node --type <span class="o">[</span>producer/consumer<span class="o">]</span> --host --port --user --passwd --db --rhost --ruser --rport --rpasswd
+Show node config. --showconf --node --type <span class="o">[</span>producer/consumer/monitor<span class="o">]</span>
+Setup a node . --setup --node --type <span class="o">[</span>producer/consumer<span class="o">]</span> <span class="o">[</span>--producer<span class="o">]</span> <span class="o">[</span>--force<span class="o">]</span>
+Unset a node . --unset --node --type <span class="o">[</span>producer/consumer<span class="o">]</span> <span class="o">[</span>--producer<span class="o">]</span> <span class="o">[</span>--force<span class="o">]</span>
+Enable a node . --enable --node --type <span class="o">[</span>producer/consumer/moniotr<span class="o">]</span> <span class="o">[</span>--producer<span class="o">]</span>
+Disable a node . --disable --node --type <span class="o">[</span>producer/consumer/monitor<span class="o">]</span> <span class="o">[</span>--producer<span class="o">]</span>
+Start a node . --start --node --type <span class="o">[</span>producer/consumer/monitor<span class="o">]</span> <span class="o">[</span>--producer<span class="o">]</span>
+Stop a node . --stop --node --type <span class="o">[</span>producer/consumer/monitor<span class="o">]</span> <span class="o">[</span>--producer<span class="o">]</span>
+Show status node. --status --node --type <span class="o">[</span>producer/consumer/monitor<span class="o">]</span>
+Move a marker . --marker --node --type consumer --producer <span class="o">[</span>--next_xid/--set_xid<span class="o">=</span>&lt;xid number&gt;<span class="o">])</span>
+Show topology . --topology --node <span class="o">[</span>--detail<span class="o">]</span>
+Shutdown TCRSrv . --shutdown --node
+Print <span class="nb">help </span>messg. --help
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+usage: Parameters explanation:
+--config Configure a node
+--db &lt;arg&gt; Database <span class="k">for </span>replication
+--detail Show Mesh Topology more details
+--disable Disable a node at startup of TCRepSrv
+--enable Enable a node at startup of TCRepSrv
+--force Force setup a node
+--help Print this <span class="nb">help </span>message.
+--host &lt;arg&gt; Host server
+--marker Move marker to next/given xid <span class="k">for </span>a consumer
+--next_xid Set marker to a next xid
+--node &lt;arg&gt; Node name
+--passwd &lt;arg&gt; User password
+--port &lt;arg&gt; Host port
+--producer &lt;arg&gt; Producer node name
+--rhost &lt;arg&gt; RHost server
+--rpasswd &lt;arg&gt; RUser password
+--rport &lt;arg&gt; RHost port
+--ruser &lt;arg&gt; RUser rdbbbdr_user
+--set_xid &lt;arg&gt; Set marker to a given xid
+--setup Setup a node
+--showconf Show node configuration
+--shutdown Shutdown TC Replication Server
+--start Start a thread on node running TCRepSrv
+--status Show status of TC Replication Server threads
+--stop Stop a thread on node running TCRepSrv
+--topology Show Mesh Topology
+--type &lt;arg&gt; Node <span class="nb">type</span> <span class="o">[</span>producer/consumer<span class="o">]</span>
+--unset Unset a node
+--user &lt;arg&gt; User rdbbbdr_user
+</pre></div>
+</div>
+<p>Status</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="o">(</span>1076<span class="o">)</span><span class="nv">$ </span>sh bin/TC_srvctl.sh --status --node webx --type producer
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/webx_rdb_bdr.conf review
+Primary Database:
+node webx
+db webx
+host hostxx-adbdb.edslab.it
+port 5433
+user postgres
+<span class="nb">pwd </span>grespost
+RDB database:
+rnode null
+rdb rdb_db__webx
+rhost hostxx-bdbdb.edslab.it
+rport 5433
+ruser postgres
+rpwd grespost
+Reading Status from _rdb_bdr.tc_process
+----------------------------------------------------------------------------------------------
+Status node webx of <span class="nb">type </span>C
+id:0 should_be:up status:start pending_op:managed last_op:2021-03-1814:56:38
+----------------------------------------------------------------------------------------------
+Status node webp of <span class="nb">type </span>S
+id:0 should_be:up status:start pending_op:managed last_op:2021-03-1814:56:38
+----------------------------------------------------------------------------------------------
+Status node weby of <span class="nb">type </span>S
+id:1 should_be:up status:start pending_op:managed last_op:2021-03-1814:56:38
+----------------------------------------------------------------------------------------------
+Status node webx of <span class="nb">type </span>M
+id:0 should_be:up status:start pending_op:managed last_op:2021-03-1814:56:38
+----------------------------------------------------------------------------------------------
+Status node webx of <span class="nb">type </span>H
+id:0 should_be:up status:start pending_op:managed last_op:2021-03-1814:56:38
+</pre></div>
+</div>
+<p>stop a thread</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --stop --node webx --type producer
+Launching..
+stop node <span class="nb">type</span> <span class="s1">&#39;M&#39;</span>
+</pre></div>
+</div>
+<p>Move queue marker for a consumer</p>
+<div class="highlight-sh"><pre>sh bin/TC_srvctl.sh --marker --node webx --type consumer --producer webp --next_xid
+---------------------------------------------------------------------------------------
+You are going to move marker to next xid for consumer webx of producer webp
+---------------------------------------------------------------------------------------
+Data close to the marker :
+Data Substr | dateop | wid | xid
+UPDATE crm.user_accesses SET id = 15221532, user_id = 7, access_date = '2021-03-18 13:16:31.278', ti | 2021-03-18 03:50:48 388 | 148176212 | 2410159802
+&lt;&lt; CURRENT MARKER &gt;&gt; ******************************************************************************** | 2021-03-18 03:50:48 725 | 148176212 | 2410159802
+UPDATE crm.user_accesses SET id = 15221532, user_id = 7, access_date = '2021-03-18 13:16:31.278', ti | 2021-03-18 03:50:48 389 | 148176213 | 2410159803
+UPDATE crm.user_accesses SET id = 15221953, user_id = 2114, access_date = '2021-03-18 13:47:03.266', | 2021-03-18 03:50:48 390 | 148176214 | 2410159804
+UPDATE wms.wh_floating_positions SET wh_floating_position_id = 2079469, floating_position = 'R010201 | 2021-03-18 03:50:49 894 | 148176215 | 2410159806
+INSERT INTO wmsdwh.wh_floating_positions_dwh_modif (wh_floating_position_id, dwh_serial_id, dwh_oper | 2021-03-18 03:50:49 894 | 148176216 | 2410159806
+UPDATE wms.open_stock_details SET open_stock_detail_id = 61149202, master_carton_detail_id = 2393515 | 2021-03-18 03:50:49 897 | 148176217 | 2410159808
+UPDATE wms.pieces_by_location SET pieces_by_location_id = 102369866, warehouse_id = 359, catalogue_i | 2021-03-18 03:50:49 897 | 148176218 | 2410159808
+INSERT INTO wms.pieces_by_location (pieces_by_location_id, warehouse_id, catalogue_item_id, wh_posit | 2021-03-18 03:50:49 897 | 148176219 | 2410159808
+INSERT INTO wmsdwh.open_stock_details_dwh_modif (open_stock_detail_id, master_carton_detail_id, mast | 2021-03-18 03:50:49 897 | 148176220 | 2410159808
+View data next to marker (next record that will be processed) - the one you want to skip:
+Data Substr | dateop | wid | xid
+UPDATE crm.user_accesses SET id = 15221532, user_id = 7, access_date = '2021-03-18 13:16:31.278', ti | 2021-03-18 03:50:48 389 | 148176213 | 2410159803
+---------------------------------------------------------------------------------------
+You are going to set marker wid:148176213 - xid:2410159803 on consumer webx for primary webp
+Do you wish to proceed ? (Y/N):</pre>
+</div>
+<p>Script to Monitor Lag between systems</p>
+<div class="highlight-sh"><div class="highlight"><pre>
+</pre></div>
+</div>
+<p>-Sql utils
+&#8211;Sequences</p>
+<div class="highlight-sh"><div class="highlight"><pre>One thing to note is that since logical replication in PostgreSQL does not provide any information about sequences, we <span class="k">do </span>not replicate sequences. They will need to be handled by some other process.
+Set
+SELECT <span class="s1">&#39;select &#39;&#39; SELECT setval(&#39;&#39;&#39;&#39;&#39;</span> <span class="o">||</span> n.nspname <span class="o">||</span> <span class="s1">&#39;.&#39;</span> <span class="o">||</span> c.relname <span class="o">||</span> <span class="s1">&#39;&#39;&#39;&#39;&#39;, &#39;&#39;||last_value - ( last_value % 4) + 4 || &#39;&#39; ); &#39;&#39; from &#39;</span><span class="o">||</span> n.nspname|| <span class="s1">&#39;.&#39;</span><span class="o">||</span> c.relname <span class="o">||</span><span class="s1">&#39;;&#39;</span>
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_roles r ON r.oid <span class="o">=</span> c.relowner
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid <span class="o">=</span> c.relnamespace
+WHERE c.relkind IN <span class="o">(</span><span class="s1">&#39;S&#39;</span>,<span class="s1">&#39;&#39;</span><span class="o">)</span> AND n.nspname &lt;&gt; <span class="s1">&#39;pg_catalog&#39;</span> AND n.nspname &lt;&gt; <span class="s1">&#39;information_schema&#39;</span> AND n.nspname !~ <span class="s1">&#39;^pg_toast&#39;</span>
+ORDER BY 1;
+Increment by
+SELECT <span class="s1">&#39;alter sequence &#39;</span><span class="o">||</span>n.nspname|| <span class="s1">&#39;.&#39;</span><span class="o">||</span> c.relname <span class="o">||</span><span class="s1">&#39; increment by 4;&#39;</span>
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_roles r ON r.oid <span class="o">=</span> c.relowner
+LEFT JOIN pg_catalog.pg_namespace n ON n.oid <span class="o">=</span> c.relnamespace
+WHERE c.relkind IN <span class="o">(</span><span class="s1">&#39;S&#39;</span>,<span class="s1">&#39;&#39;</span><span class="o">)</span> AND n.nspname &lt;&gt; <span class="s1">&#39;pg_catalog&#39;</span> AND n.nspname &lt;&gt; <span class="s1">&#39;information_schema&#39;</span> AND n.nspname !~ <span class="s1">&#39;^pg_toast&#39;</span>
+ORDER BY 1;
+drop FK constraints
+SELECT <span class="s1">&#39;ALTER TABLE &quot;&#39;</span><span class="o">||</span>nspname||<span class="s1">&#39;&quot;.&quot;&#39;</span><span class="o">||</span>relname||<span class="s1">&#39;&quot; DROP CONSTRAINT &quot;&#39;</span><span class="o">||</span>conname||<span class="s1">&#39;&quot;;&#39;</span>
+FROM pg_constraint
+INNER JOIN pg_class ON <span class="nv">conrelid</span><span class="o">=</span>pg_class.oid
+INNER JOIN pg_namespace ON pg_namespace.oid<span class="o">=</span>pg_class.relnamespace
+where <span class="nv">contype</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span> ORDER BY CASE WHEN <span class="nv">contype</span><span class="o">=</span><span class="s1">&#39;f&#39;</span> THEN 0 ELSE 1 END,contype,nspname,relname,conname;
+</pre></div>
+</div>
+<p>unset a producer node</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/stopTCRepSrv.sh -n webp
+sh bin/TC_srvctl.sh --unset --node webp --type producer --Removing tc_process entry:Master webp.. Replication slot webp_publ_ exists !
+
+prima <span class="nb">unset </span>di eventuali slave
+</pre></div>
+</div>
+<p>unset a consumer node</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --unset --node webx --type consumer --producer webp
+You are going to <span class="nb">unset </span>consumer node webx from producer webp
+Do you wish to proceed ? <span class="o">(</span>Y/N<span class="o">)</span>: Y
+&gt;&gt; Going to <span class="nb">unset </span>node webx as consumer <span class="k">for </span>producer webp
+Check Schema _rdb_bdr exist on db rdb_db__webx :true
+--Removing tc_process entry:Slave webx <span class="k">for </span>master webp..
+--Going to drop subscription..
+subscription webx_subs_webp <span class="k">for </span>publication webp_publ: disabled
+subscription webx_subs_webp <span class="k">for </span>publication webp_publ: <span class="nb">set</span> <span class="o">(</span><span class="nv">slot_name</span><span class="o">=</span>none<span class="o">)</span>
+subscription webx_subs_webp <span class="k">for </span>publication webp_publ: dropped
+Subscription webx_subs_webp <span class="k">for </span>publication webp_publ DROPPED !
+--Going to drop rdb_bdr.walq__webp% tables on rdb_db__webx..
+Check Schema _rdb_bdr exist on db rdb_db__webx :true
+&gt; Checking existance tables _rdb_bdr.walq__webp% in database rdb_db__webx exists!
+Dropping _rdb_bdr.walq__webp% tables on rdb_db__webx
+&gt; Drop tables _rdb_bdr.walq__webp% in database rdb_db__webx !
+walq__webp_offset
+walq__webp_log
+walq__webp_filtro
+walq__webp_crules
+walq__webp_conflicts
+walq__webp_cmanaged
+walq__webp_4b69
+walq__webp_4b68
+walq__webp_4b67
+walq__webp_4b66
+walq__webp
+&gt; Drop sequences _rdb_bdr.walq__webp% in database rdb_db__webx !
+--Going to drop rdb_bdr schema on rdb_db__webx and database rdb_db__webx <span class="k">for </span>consumer webx ..
+Check Schema _rdb_bdr exist on db rdb_db__webx :true
+&gt; Checking existance tables _rdb_bdr.walq__% in database rdb_db__webx exists!
+&lt; Schema _rdb_bdr tables walq__% in database rdb_db__webx exists!
+Skipping drop of schema _rdb_bdr in database rdb_db__webx
+--Going to drop Replication Slot <span class="k">for </span>removed slave subscription on master webp
+Replication slot _publ_webx
+Dropping replication slot :webp_publ_webx
+
+<span class="nv">webx</span><span class="o">=</span><span class="c"># table dba.__events_ddl ;</span>
+
+ddl_id | wal_lsn | wal_txid | ddl_user | ddl_object | ddl_type | ddl_command | creation_timestamp
+--------+---------------+------------+----------+---------------------+----------+-------------+-------------------------------
+47 | 4ADB/E5FAD780 | 2398623870 | statusr | webp | MASTER | CREATE NODE | 2021-03-08 11:10:48.330897+01
+48 | 150/C320BAF0 | 11211039 | postgres | webx&lt;-weby | SLAVE | CREATE NODE | 2021-03-17 16:02:00.518704+01
+49 | 15A/F94C5088 | 12377485 | postgres | webx | MASTER | CREATE NODE | 2021-03-18 15:56:35.807368+01
+50 | 163/77E41D70 | 13570412 | postgres | webx&lt;-webp | SLAVE | DROP NODE | 2021-03-19 15:04:08.827209+01
+-1 | 163/77E8F570 | 13571618 | statusr | NO_ACTIVITY_LSN_ACK | DML | UPSERT | 2021-03-19 15:22:24.24918+01
+</pre></div>
+</div>
+<p>unset a producer node (cont..)</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh bin/TC_srvctl.sh --unset --node webp --type producer --force
+You are going to <span class="nb">unset </span>producer node webp
+Do you wish to proceed ? <span class="o">(</span>Y/N<span class="o">)</span>: Y
+&gt;&gt; Going to <span class="nb">unset </span>node webp as producer
+--Removing tc_process entry:Master webp..
+Replication slot webp_publ_ NOT exists OR Forced execution
+--Going to drop publication..
+Publication webp_publ <span class="k">for </span>table _rdb_bdr.walq__webp exists
+Publication webp__publ: dropped
+--Going to drop rdb_bdr.walq__webp% tables on rdb_db__webp..
+Check Schema _rdb_bdr exist on db rdb_db__webp :true
+&gt; Checking existance tables _rdb_bdr.walq__webp% in database rdb_db__webp exists!
+Dropping _rdb_bdr.walq__webp% tables on rdb_db__webp
+&gt; Drop tables _rdb_bdr.walq__webp% in database rdb_db__webp !
+walq__webp_xid_4b69
+walq__webp_xid_4b68
+walq__webp_xid_4b67
+walq__webp_xid_4b66
+walq__webp_xid
+walq__webp_offset
+walq__webp_mon
+walq__webp_log
+walq__webp_filtro
+walq__webp_4b69
+walq__webp_4b68
+walq__webp_4b67
+walq__webp_4b66
+walq__webp
+&gt; Drop sequences _rdb_bdr.walq__webp% in database rdb_db__webp !
+walq__webp_wid_seq
+--Going to drop rdb_bdr schema on rdb_db__webp and database rdb_db__webp <span class="k">for </span>producer webp ..
+Check Schema _rdb_bdr exist on db rdb_db__webp :true
+&gt; Checking existance tables _rdb_bdr.walq__% in database rdb_db__webp exists!
+Check Schema _rdb_bdr exist on db rdb_db__webp :true
+Schema _rdb_bdr dropped
+org.postgresql.util.PSQLException: ERROR: database <span class="s2">&quot;rdb_db__webp&quot;</span> is being accessed by other users
+Detail: There is 1 other session using the database.
+at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse<span class="o">(</span>QueryExecutorImpl.java:2553<span class="o">)</span>
+at org.postgresql.core.v3.QueryExecutorImpl.processResults<span class="o">(</span>QueryExecutorImpl.java:2285<span class="o">)</span>
+at org.postgresql.core.v3.QueryExecutorImpl.execute<span class="o">(</span>QueryExecutorImpl.java:323<span class="o">)</span>
+at org.postgresql.jdbc.PgStatement.executeInternal<span class="o">(</span>PgStatement.java:481<span class="o">)</span>
+at org.postgresql.jdbc.PgStatement.execute<span class="o">(</span>PgStatement.java:401<span class="o">)</span>
+at org.postgresql.jdbc.PgStatement.executeWithFlags<span class="o">(</span>PgStatement.java:322<span class="o">)</span>
+at org.postgresql.jdbc.PgStatement.executeCachedSql<span class="o">(</span>PgStatement.java:308<span class="o">)</span>
+at org.postgresql.jdbc.PgStatement.executeWithFlags<span class="o">(</span>PgStatement.java:284<span class="o">)</span>
+at org.postgresql.jdbc.PgStatement.execute<span class="o">(</span>PgStatement.java:279<span class="o">)</span>
+at com.edslab.TCSrvCTL.dropRdbDatabase<span class="o">(</span>TCSrvCTL.java:953<span class="o">)</span>
+at com.edslab.TCSrvCTL.unsetNode<span class="o">(</span>TCSrvCTL.java:1537<span class="o">)</span>
+at com.edslab.TCSrvCTL.applyOptions<span class="o">(</span>TCSrvCTL.java:2309<span class="o">)</span>
+at com.edslab.TCSrvCTL.applyOptions<span class="o">(</span>TCSrvCTL.java:2364<span class="o">)</span>
+at com.edslab.TCSrvCTL.main<span class="o">(</span>TCSrvCTL.java:2406<span class="o">)</span>
+--Going to drop Replication Slot ..
+Replication slot _rdb_webp_bdr exists
+Dropping replication slot :rdb_webp_bdr
+
+To <span class="nb">complete </span>cleanup, manually execute : drop schema dba cascade; on primary database db01
+
+table dba.__events_ddl;
+
+797 | 4B67/80A38000 | 2411327431 | statusr | webp | MASTER | DROP NODE | 2021-03-19 15:06:34.203928+01
+</pre></div>
+</div>
+<p>Other features</p>
+<blockquote>
+<div><p>Set queues deep with walqtrunc in conf file</p>
+<p>walqtrunc=9
+Set batch size
+batch_size=500
+Set enabling queue history
+log_hist=false</p>
+</div></blockquote>
+<p>Filtering</p>
+<p>-To do</p>
+<blockquote>
+<div>Crypt passwd
+New version (parallalel Dispatcher Consumers)</div></blockquote>
+</div>
+<div class="section" id="use-cases">
+<h2>Use cases<a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></h2>
+<p>-FULL DB WITH MASTER-MASTER REPLICATION</p>
+<blockquote>
+<div>Each DB Instance is supported by a single transactional Read/Write DB database that contains all Shipments even if only a subset of them can be edited (the others must be edited on the owning DB Instance).
+In this scenario we have to face a Multi Master replication even if, from a logical point of view, the replication remains Master-Slave (each record can be edited only in his own DB Instance) thus minimizing conflict issues.</div></blockquote>
+<p>-Migrating Document Storage Database with TCapture RepSrv</p>
+<blockquote>
+<div><ul class="simple">
+<li>~10 TB size of production database</li>
+<li>Postgresql v9.5</li>
+<li>Need to migrato to v10</li>
+<li>A limited set of tables with binary data</li>
+<li>A very big one with binary data</li>
+</ul>
+<p>document_data (doc_id integer,doc_data bytea )
+Migration difficulties
+• Time obstacle dump/restore
+• Pg_basebackup not possible between main versions
+• ??
+• Replication server between versions</p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Quickstart</a><ul>
+<li><a class="reference internal" href="#tutorial-tcapture">Tutorial TCapture</a></li>
+<li><a class="reference internal" href="#learning-objectives">Learning objectives</a></li>
+<li><a class="reference internal" href="#test-table-definition">Test table definition</a></li>
+<li><a class="reference internal" href="#steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork">Steps to configure a mmr between 2 nodes in vdc located on milan and newyork</a></li>
+<li><a class="reference internal" href="#a-full-example">A full example</a></li>
+<li><a class="reference internal" href="#use-cases">Use cases</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="namingconvention.html"
+                        title="previous chapter">TCapture Naming Convention</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="prerequisit.html"
+                        title="next chapter">TCapture Prerequisites</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/quickstart.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="prerequisit.html" title="TCapture Prerequisites"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="namingconvention.html" title="TCapture Naming Convention"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

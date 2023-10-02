@@ -1,0 +1,167 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TCapture table level filtering &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="TCapture Monitoring" href="monitoring.html" />
+    <link rel="prev" title="Adding a Replicated node in TCapture" href="addconsumer.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="monitoring.html" title="TCapture Monitoring"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="addconsumer.html" title="Adding a Replicated node in TCapture"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tcapture-table-level-filtering">
+<span id="tablefiltering"></span><h1>TCapture table level filtering<a class="headerlink" href="#tcapture-table-level-filtering" title="Permalink to this headline">¶</a></h1>
+<p>Learn how to use table level filtering in TCapture Replication</p>
+<div class="section" id="tcapture-repsrv-filtering">
+<h2>TCapture RepSrv filtering<a class="headerlink" href="#tcapture-repsrv-filtering" title="Permalink to this headline">¶</a></h2>
+<p>Activate the filtering</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">filter</span><span class="o">=</span><span class="nb">true</span>
+ <span class="c"># file ../conf/prod1_rdb_bdr.conf</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Configure filter options inserting directly in table ,</dt>
+<dd>example all table in public schema Delete/Insert/Update;</dd>
+</dl>
+<div class="highlight-sh"><div class="highlight"><pre>insert into _rdb_bdr.walq__prod1_filtro values <span class="o">(</span><span class="s1">&#39;public&#39;</span>,<span class="s1">&#39;all&#39;</span>,<span class="s1">&#39;DIU&#39;</span>, now<span class="o">())</span>;
+INSERT 0 1
+
+<span class="nv">rdb_db__prod1</span><span class="o">=</span><span class="c"># select * from _rdb_bdr.walq__prod1_filtro ;</span>
+
+schemaf | tablef | opdml |           dateop
+---------+--------+-------+----------------------------
+public  | all    | DIU   | 2020-01-13 15:49:21.344249
+</pre></div>
+</div>
+<p>Recycle Replication Server:</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh stopTCRepSrv.sh -n prod1
+sh runTCRepSrv.sh -n prod1
+</pre></div>
+</div>
+<p>Test it:</p>
+<div class="highlight-sh"><div class="highlight"><pre>delete from prova where <span class="nv">aa</span><span class="o">=</span>66;
+</pre></div>
+</div>
+<p>Check log trace:</p>
+<div class="highlight-sh"><div class="highlight"><pre>TRACE | 2020-01-13 15:52:02.334 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:563<span class="o">)</span> - TC-prod1_651:&lt;Begin Txid&gt; :9777247
+TRACE | 2020-01-13 15:52:02.334 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:573<span class="o">)</span> - TC-prod1_651:<span class="s">&lt;&lt; Debug &gt;&gt;  line:9777247#D</span>ELETE FROM public.prova WHERE <span class="nv">aa</span> <span class="o">=</span> 66 AND <span class="nv">ac</span> <span class="o">=</span> <span class="s1">&#39;prod1&#39;</span>; Txid: 9777247
+TRACE |  2020-01-13 15:52:02.334 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:315<span class="o">)</span> - TC-prod1_651:<span class="s">&lt;&lt; Check &gt;&gt; : select 1 from _rdb_bdr.walq__prod1_xid where xid_current =9777247</span>
+<span class="s">TRAC</span>E | 2020-01-13 15:52:02.338 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:362<span class="o">)</span> - TC-prod1_651:checkFilt on  DELETE FROM public.prova WHERE <span class="nv">aa</span> <span class="o">=</span> 66 AND <span class="nv">ac</span> <span class="o">=</span> <span class="s1">&#39;prod1&#39;</span>
+TRACE | 2020-01-13 15:52:02.338 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:363<span class="o">)</span> - TC-prod1_651:v_opdml is  D
+TRACE | 2020-01-13 15:52:02.338 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:368<span class="o">)</span> - TC-prod1_651:parz is  <span class="c">#public.prova#</span>
+TRACE | 2020-01-13 15:52:02.338 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:370<span class="o">)</span> - TC-prod1_651:qschema is  <span class="c">#public#</span>
+TRACE | 2020-01-13 15:52:02.338 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:372<span class="o">)</span> - TC-prod1_651:qtable is  <span class="c">#prova#</span>
+TRACE | 2020-01-13 15:52:02.344 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:610<span class="o">)</span> - TC-prod1_651:Filter is <span class="nb">true</span>
+TRACE | 2020-01-13 15:52:02.354 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:513<span class="o">)</span> - TC-prod1_651:.......................................&gt;&gt;  Commit#1 &gt;&gt; in Buffer null - Txid:0 - Txidbef:9777247
+INFO  | 2020-01-13 15:52:02.355 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:514<span class="o">)</span> - TC-prod1_651:Managing xid 9777247
+INFO  | 2020-01-13 15:52:02.356 | <span class="o">[</span>TC-prod1<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:521<span class="o">)</span> - TC-prod1_651:Scanned:1
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TCapture table level filtering</a><ul>
+<li><a class="reference internal" href="#tcapture-repsrv-filtering">TCapture RepSrv filtering</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="addconsumer.html"
+                        title="previous chapter">Adding a Replicated node in TCapture</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="monitoring.html"
+                        title="next chapter">TCapture Monitoring</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tablefiltering.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="monitoring.html" title="TCapture Monitoring"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="addconsumer.html" title="Adding a Replicated node in TCapture"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

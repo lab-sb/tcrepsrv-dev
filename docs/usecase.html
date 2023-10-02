@@ -1,0 +1,143 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TCapture Use Cases &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="TCapture limitations" href="limitations.html" />
+    <link rel="prev" title="TCapture DB structure" href="dbstructure.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="limitations.html" title="TCapture limitations"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dbstructure.html" title="TCapture DB structure"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tcapture-use-cases">
+<span id="usecase"></span><h1>TCapture Use Cases<a class="headerlink" href="#tcapture-use-cases" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="use-cases">
+<h2>Use cases<a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></h2>
+<p>-FULL DB WITH MASTER-MASTER REPLICATION</p>
+<blockquote>
+<div>Each DB Instance is supported by a single transactional Read/Write DB database that contains all Shipments even if only a subset of them can be edited (the others must be edited on the owning DB Instance).
+In this scenario we have to face a Multi Master replication even if, from a logical point of view, the replication remains Master-Slave (each record can be edited only in his own DB Instance) thus minimizing conflict issues.</div></blockquote>
+<p>-Migrating Document Storage Database with TCapture RepSrv</p>
+<blockquote>
+<div><ul class="simple">
+<li>~10 TB size of production database</li>
+<li>Postgresql v9.5</li>
+<li>Need to migrato to v10</li>
+<li>A limited set of tables with binary data</li>
+<li>A very big one with binary data</li>
+</ul>
+<p>document_data (doc_id integer,doc_data bytea )
+Migration difficulties
+• Time obstacle dump/restore
+• Pg_basebackup not possible between main versions
+• ??
+• Replication server between versions</p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TCapture Use Cases</a><ul>
+<li><a class="reference internal" href="#use-cases">Use cases</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dbstructure.html"
+                        title="previous chapter">TCapture DB structure</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="limitations.html"
+                        title="next chapter">TCapture limitations</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/usecase.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="limitations.html" title="TCapture limitations"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dbstructure.html" title="TCapture DB structure"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

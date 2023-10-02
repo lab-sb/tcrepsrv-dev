@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Quickstart &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="quickstart">
+<span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<p>First, complete the <a class="reference internal" href="installation.html#installation"><em>TCapture Installation</em></a> process.</p>
+<div class="section" id="tutorial-tcapture">
+<h2>Tutorial TCapture<a class="headerlink" href="#tutorial-tcapture" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Learn how to use the T-Capture technology to replicate data over tables queues.</dt>
+<dd>This tutorial explains how to set up and run T-Capture Replication Server .</dd>
+</dl>
+</div>
+<div class="section" id="learning-objectives">
+<h2>Learning objectives<a class="headerlink" href="#learning-objectives" title="Permalink to this headline">¶</a></h2>
+<p>After you complete this tutorial, you will know how to:</p>
+<blockquote>
+<div><p>Create and use replication slot over logical decoding rdblogdec , queues tables, and publication/subscription.</p>
+<p>Enable a Postgresql database for replication.</p>
+<p>Set up and operate the T Capture and T Apply programs.</p>
+<p>Configure the T Capture and T Apply programs to use the queues.</p>
+<p>Create a TCapture subscription to map a source table to a target table.</p>
+</div></blockquote>
+</div>
+<div class="section" id="test-table-definition">
+<h2>Test table definition<a class="headerlink" href="#test-table-definition" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sql"><pre>prd_db=# create table prova (aa serial, ab varchar(20) default 'prd' , ac timestamp default now(), ad bigint default txid_current());
+prd_db=# alter table prova add primary key (aa,ab);
+
+qas_db=# create table prova (aa serial, ab varchar(20) default 'qas' , ac timestamp default now(), ad bigint default txid_current());
+qas_db=# alter table prova add primary key (aa,ab);
+
+prd_db=# insert into prova (ab) values ('first');
+prd_db=# insert into prova (aa) select generate_series(max(aa)+1, max(aa)+1)  from prova;
+prd_db=# \watch -n1
+
+qas_db=# insert into prova (aa) select generate_series(max(aa)+1, max(aa)+1)  from prova;
+qas_db=# \watch -n1</pre>
+</div>
+</div>
+<div class="section" id="steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork">
+<h2>Steps to configure a mmr between 2 nodes in vdc located on milan and newyork<a class="headerlink" href="#steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre>-- milan        host <span class="o">(</span>milhost<span class="o">)</span> db mil_db node mila
+-- newyork      host <span class="o">(</span>nychost<span class="o">)</span> db nyc_db node nyci
+</pre></div>
+</div>
+<ul class="simple">
+<li>deploy tc custom logical decoder to PGSQL lib</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:cp ./lib/rdb_decoder/rdblogdec.so /usr/pgsql-10/lib/rdblogdec.so
+</pre></div>
+</div>
+<ul class="simple">
+<li>add to postgresql.conf</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">wal_level</span> <span class="o">=</span> logical
+<span class="nv">max_wal_senders</span> <span class="o">=</span> 10            <span class="c"># max number of walsender processes</span>
+<span class="nv">max_replication_slots</span> <span class="o">=</span> 18
+<span class="nv">track_commit_timestamp</span> <span class="o">=</span> on
+</pre></div>
+</div>
+<ul class="simple">
+<li>reload</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:pg_ctl stop -D /var/lib/pgsql/10/data/ -m immediate; pg_ctl start -D /var/lib/pgsql/10/data/
+</pre></div>
+</div>
+<ul class="simple">
+<li>uncompress TCRepSrv sw</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:tar -zxvf tcrepsrv-0.9.1.rhel7.x86_64.tar.gz
+
+milhost:cd rdbdbr
+</pre></div>
+</div>
+<ul class="simple">
+<li>edit .rdbbdr_env.sh</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>adapt line to your path <span class="nb">export </span><span class="nv">RDBBDR</span><span class="o">=</span>/var/lib/pgsql/scripts/mycode/rdbbdr
+</pre></div>
+</div>
+<p>source it</p>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:. .rdbbdr_env.sh
+milhost:echo <span class="nv">$RDBBDR</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>create replication user</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>create user : create user rdbbdr_user  superuser inherit login password <span class="s1">&#39;rdbbdr_pwd&#39;</span>;
+</pre></div>
+</div>
+<ul class="simple">
+<li>database containing replication tables structures</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>create database rdb_db__mila;
+</pre></div>
+</div>
+<ul class="simple">
+<li>add a primary node mila (ie milan location)</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:sh tc_cli_add_primary_node.sh  -h localhost -u rdbbdr_user -p 5432 -pwd rdbbdr_pwd -db mil_db -n mila -rh localhost -ru rdbbdr_user -rport 5432  -rp rdbbdr_pwd -vrdb rdb_d
+</pre></div>
+</div>
+<p>this will create the
+a)_rdb_bdr schema structure on master mila
+b) replication slot rdb_mila_bdr on mil_db
+c) parameter file for node mila under $RDBBDR/conf/mila_rdb_bdr.conf
+d) mila_publ</p>
+<ul class="simple">
+<li>do the same on newyork host</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost:sh tc_cli_add_primary_node.sh  -h localhost -u rdbbdr_user -p 5432 -pwd rdbbdr_pwd -db nyc_db -n nyci -rh localhost -ru rdbbdr_user -rport 5432  -rp rdbbdr_pwd -vrdb rdb_db
+</pre></div>
+</div>
+<ul class="simple">
+<li>add a remote primary node conf</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost: sh tc_cli_add_remote_node_conf.sh  -h vmildb-glf01  -u rdbbdr_user -p 5432 -pwd rdbbdr_pwd -db mil_db -n mila  -rh vmildb-glf01 -ru rdbbdr_user -rport 5432  -rp rdbbdr_pwd -vrdb rdb_db
+</pre></div>
+</div>
+<p>this will populate the parameter file for remote node mila</p>
+<p>do the same in milan for remote primary nyci</p>
+<div class="highlight-sh"><div class="highlight"><pre>milhost: sh tc_cli_add_remote_node_conf.sh  -h vnycdb-glf01  -u rdbbdr_user -p 5432 -pwd rdbbdr_pwd -db nyc_db -n nyci  -rh vnycdb-glf01 -ru rdbbdr_user -rport 5432  -rp rdbbdr_pwd -vrdb rdb_db
+</pre></div>
+</div>
+<ul class="simple">
+<li>we can now join the remote node (ie became a slave for the specified myci)</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>milhost:sh tc_cli_join_a_remote_node.sh  -h localhost -u rdbbdr_user -p 5432 -pwd rdbbdr_pwd -db rdb_db__mila -n mila -primary nyci
+</pre></div>
+</div>
+<ul class="simple">
+<li>and can now join the remote node (ie became a slave for the specified mila)</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>nychost: sh tc_cli_join_a_remote_node.sh  -h localhost -u rdbbdr_user -p 5432 -pwd rdbbdr_pwd -db rdb_db__nyci -n nyci -primary mila
+</pre></div>
+</div>
+<p>this will create the
+a) mila_subs_nyci and mila_publ_nyci slot for nyci subscription
+a) nyci_subs_mila and nyci_publ_mila slot for mila subscription</p>
+<p>we are ready to run T-Capture program on each master:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nb">export </span><span class="nv">NODEMST</span><span class="o">=</span>nyci
+sh run-ReplicationServer.sh
+</pre></div>
+</div>
+<p>running for node: nyci</p>
+<div class="highlight-sh"><div class="highlight"><pre>Logging startup messages to : TCapture_nyci_2019-06-20-08:58:01.log
+
+press a to tail the log :
+
+/var/lib/pgsql/scripts/mycode/rdbbdr/log/nyci_rdb_bdr.log
+
+<span class="o">[</span>2019-06-20 09:00:29 462<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Start logging
+<span class="o">[</span>2019-06-20 09:00:29 947<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Queue XID at restart: 9855220
+<span class="o">[</span>2019-06-20 09:00:29 960<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Xlog Position: LSN<span class="o">{</span>9/D9BEA30<span class="o">}</span>
+<span class="o">[</span>2019-06-20 09:00:29 961<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Xlog Current : LSN<span class="o">{</span>9/1363D360<span class="o">}</span>
+<span class="o">[</span>2019-06-20 09:00:29 962<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> Slot Name: rdb_nyci_bdr
+<span class="o">[</span>2019-06-20 09:00:29 962<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span>  Check LSn from stream &gt; LSn from queue  9/D9BEA30 vs 9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:29 963<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> LESS - stay in the loop9/D9BEA30-9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:30 068<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span>  Check LSn from stream &gt; LSn from queue  9/1363BAB8 vs 9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:30 068<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span>  ok go on :9/1363BAB8-9/D9BEA30
+<span class="o">[</span>2019-06-20 09:00:30 070<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> ----------------------------------------------------------------------------------------------------------------------------------------------
+<span class="o">[</span>2019-06-20 09:00:30 088<span class="o">]</span> <span class="o">[</span>INFO   <span class="o">]</span> &lt;Begin Txid&gt; :9855480 &lt;LSN&gt; :9/1363BAB8
+</pre></div>
+</div>
+<ul class="simple">
+<li>stop replication</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre> sh stop_ReplicationServer.sh
+root     38474 38472  4 Jun14 ?        06:00:30 /usr/java/jdk1.8.0_201-amd64/bin/java -cp ../lib/postgresql-42.2.19.jar:../pgjdbc/pgjdbc/src/:. com.edslab.TCapture
+</pre></div>
+</div>
+<p>we are ready to run T-Apply program (RunWal will be renamed soon  ) on each master:</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh run-RunWal.sh
+</pre></div>
+</div>
+<p>running for node: mila  node slave:  nyci</p>
+<p>Logging startup messages to : RunWal_mila_nyci_2019-06-20-09:05:47.log
+Launching..
+root     40228 40226 32 09:05 pts/1    00:00:00 /usr/java/jdk1.8.0_201-amd64/bin/java -cp ../lib/postgresql-42.2.19.jar:../pgjdbc/pgjdbc/src/:. com.edslab.RunWal</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh stop_RunWal.sh
+postgres 62992 62990  0 Jun17 ?        00:07:01 /usr/java/jdk1.8.0_201-amd64/bin/java -cp ../lib/postgresql-42.2.19.jar:../pgjdbc/pgjdbc/src/:. com.edslab.RunWal
+</pre></div>
+</div>
+<ul class="simple">
+<li>test the replication</li>
+</ul>
+<div class="highlight-sh"><div class="highlight"><pre>run on master
+sh prim_trans_gap_vcd.sh 10
+</pre></div>
+</div>
+<p>2019-06-20-15:11:05:189496582  - Starting
+&gt;2019-06-20-15:11:05:355263046  - Checking
+2019-06-20-15:11:05:882263273  - Find Gap on Txid   10104492 ..
+2019-06-20-15:11:06:408876821  - Find Gap on Txid   10104492 ..
+2019-06-20-15:11:06:936477024  - Find Gap on Txid   10104492 ..
+&lt;2019-06-20-15:11:07:463094627  - Gap filled on Txid  10104492 ..
+2019-06-20-15:11:07:475373471  - Finished</p>
+<p>check the master node mila log  log  tail -99f  log/mila_rdb_bdr.log
+check the slave node nyci log  log  tail -99f  log/mila_rdb_bdr.log</p>
+<p>check the master node mila log  log  tail -99f  log/mila_rdb_bdr.log</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Quickstart</a><ul>
+<li><a class="reference internal" href="#tutorial-tcapture">Tutorial TCapture</a></li>
+<li><a class="reference internal" href="#learning-objectives">Learning objectives</a></li>
+<li><a class="reference internal" href="#test-table-definition">Test table definition</a></li>
+<li><a class="reference internal" href="#steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork">Steps to configure a mmr between 2 nodes in vdc located on milan and newyork</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/quickstart-v0.4.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

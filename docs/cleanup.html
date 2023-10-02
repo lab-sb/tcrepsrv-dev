@@ -1,0 +1,143 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TCapture DB structure CleanUp &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="TCapture SrvCtl Command reference" href="commandreference.html" />
+    <link rel="prev" title="TCapture Troubleshooting" href="troubleshooting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="commandreference.html" title="TCapture SrvCtl Command reference"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="troubleshooting.html" title="TCapture Troubleshooting"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tcapture-db-structure-cleanup">
+<span id="cleanup"></span><h1>TCapture DB structure CleanUp<a class="headerlink" href="#tcapture-db-structure-cleanup" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-sh"><div class="highlight"><pre>sh TC_srvctl.sh --unset  --node swap --type consumer --producer qas --force
+ sh TC_srvctl.sh --unset  --node qas  --type consumer --producer swap --force
+
+
+ sh TC_srvctl.sh --unset  --node qas  --type producer --force
+ sh TC_srvctl.sh --unset  --node swap --type producer --force
+ sh TC_srvctl.sh --unset  --node swap --type consumer --producer qas --force
+ sh TC_srvctl.sh --unset  --node qas  --type consumer --producer swap --force
+</pre></div>
+</div>
+<p>on eache primary database:</p>
+<div class="highlight-sh"><div class="highlight"><pre>drop schema _rdb_bdr cascade;
+drop schema _rdb_bdr cascade;
+</pre></div>
+</div>
+<div class="section" id="tcapture-repsrv-software-cleanup">
+<h2>TCapture RepSrv Software Cleanup<a class="headerlink" href="#tcapture-repsrv-software-cleanup" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$RDBBDR</span><span class="se">\c</span>leanup.sh
+
+rm -Rf <span class="nv">$RDBBDR</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TCapture DB structure CleanUp</a><ul>
+<li><a class="reference internal" href="#tcapture-repsrv-software-cleanup">TCapture RepSrv Software Cleanup</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="troubleshooting.html"
+                        title="previous chapter">TCapture Troubleshooting</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="commandreference.html"
+                        title="next chapter">TCapture SrvCtl Command reference</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/cleanup.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="commandreference.html" title="TCapture SrvCtl Command reference"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="troubleshooting.html" title="TCapture Troubleshooting"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

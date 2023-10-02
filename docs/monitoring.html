@@ -1,0 +1,214 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TCapture Monitoring &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="TCapture Troubleshooting" href="troubleshooting.html" />
+    <link rel="prev" title="TCapture table level filtering" href="tablefiltering.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="troubleshooting.html" title="TCapture Troubleshooting"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tablefiltering.html" title="TCapture table level filtering"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tcapture-monitoring">
+<span id="monitoring"></span><h1>TCapture Monitoring<a class="headerlink" href="#tcapture-monitoring" title="Permalink to this headline">¶</a></h1>
+<p>This section describes how to monitor TCapture Replication Server status processes .</p>
+<div class="section" id="check-status-tcapture-processes">
+<h2>Check status Tcapture  processes<a class="headerlink" href="#check-status-tcapture-processes" title="Permalink to this headline">¶</a></h2>
+<p>Internal processes are of type:</p>
+<blockquote>
+<div><ul class="simple">
+<li>M     master process</li>
+<li>S     slave process</li>
+<li>H     monitor process</li>
+</ul>
+</div></blockquote>
+<div class="highlight-sh"><div class="highlight"><pre>n_id  | n_name | n_shouldbe | n_state                  | n_operation                  | n_type  | n_mstr      |          n_dateop          |         n_datecrea         | n_pid
+ &lt;0-5&gt; &lt;node&gt;  &lt;up/down&gt;    &lt;start/stop/shutdown&gt;        &lt;managed/start/stop/shutdown&gt;  &lt;M/S/H&gt;   &lt;masternode&gt;        &lt;date last operation&gt;   &lt;date creation&gt;             &lt;internal pid&gt;
+</pre></div>
+</div>
+<p>you can start/stop TCapture internal threads with TC_srvctl.sh  &#8211;start/stop command</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh TC_srvctl.sh  --stop  --node swap --type producer
+</pre></div>
+</div>
+<p>in the log:</p>
+<div class="highlight-sh"><div class="highlight"><pre>INFO  | 2020-01-10 16:00:48.649 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:270<span class="o">)</span> - TCapt Thread name:TC-swap_898 is going to be stopped!
+INFO  | 2020-01-10 16:00:48.649 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:270<span class="o">)</span> - TCapt Thread name:TC-swap_898 is going to be stopped!
+</pre></div>
+</div>
+<div class="highlight-sh"><div class="highlight"><pre>sh TC_srvctl.sh  --start  --node swap --type producer
+</pre></div>
+</div>
+<p>in the log:</p>
+<div class="highlight-sh"><div class="highlight"><pre>INFO  | 2020-01-10 16:02:42.799 | <span class="o">[</span>main<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:735<span class="o">)</span> - Running TCapt <span class="k">for </span>node :swap
+INFO  | 2020-01-10 16:02:42.801 | <span class="o">[</span>TC-swap<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:164<span class="o">)</span> - TC-swap_278:  is in running state
+</pre></div>
+</div>
+<p>you can check status of TCapture internal threads with TC_srvctl.sh  &#8211;status command</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh TC_srvctl.sh  --status --node qas --type consumer
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/qas_bdr_rdb.conf review
+
+Reading Status from _rdb_bdr.tc_process
+----------------------------------------------------------------------------------------------
+Status node  swap of <span class="nb">type </span>S
+id:0 should_be:up status:start pending_op:managed last_op:2020-01-1015:08:00
+
+sh TC_srvctl.sh  --status --node swap --type producer
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/swap_rdb_bdr.conf review
+
+Reading Status from _rdb_bdr.tc_process
+----------------------------------------------------------------------------------------------
+Status node  swap of <span class="nb">type </span>M
+id:0 should_be:up status:start pending_op:managed last_op:2020-01-1015:08:22
+----------------------------------------------------------------------------------------------
+Status node  swap of <span class="nb">type </span>H
+id:0 should_be:up status:start pending_op:managed last_op:2020-01-1015:08:22
+</pre></div>
+</div>
+<p>or you can investigate the _rdb_bdr.tc_process table under rdb_db__node database:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__swap</span><span class="o">=</span><span class="c"># select * from _rdb_bdr.tc_process ;</span>
+n_id | n_name | n_shouldbe | n_state | n_operation | n_type | n_mstr |          n_dateop          |         n_datecrea         | n_pid
+------+--------+------------+---------+-------------+--------+--------+----------------------------+----------------------------+-------
+0 | swap   | up         | start   | managed     | M      | swap   | 2020-01-10 15:08:22.409342 | 2020-01-10 13:28:15.622296 |    96
+0 | swap   | up         | start   | managed     | H      | swap   | 2020-01-10 15:08:22.423165 | 2020-01-10 13:28:15.623324 | 99304
+<span class="o">(</span>2 rows<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="check-the-monitoring-table">
+<h2>Check the monitoring table<a class="headerlink" href="#check-the-monitoring-table" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>If monitoring process is active  the monitoring table is updated with:</dt>
+<dd><ul class="first last simple">
+<li>state          the state of the queue</li>
+<li>q_xid          the last xid in queue</li>
+<li>q_dateop       the last xid timestamp</li>
+<li>n_mstr         master node the queue belongs to</li>
+<li>n_slv          slave node the queue is replicated to</li>
+<li>xid_offset     the last xid managed by the slave node</li>
+<li>db_xid_last_committed         last xid committed in master system</li>
+<li>db_last_committed_dateop      last xid timestamp in master system</li>
+<li>wal_lsn        lsn in the master system</li>
+<li>q_lsn          lsn in the maser queue</li>
+<li>flushed_lsn    lsn flushed in the master/slave system</li>
+</ul>
+</dd>
+</dl>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">rdb_db__swap</span><span class="o">=</span><span class="c"># select * from _rdb_bdr.tc_monit;</span>
+ db_xid_last_committed |  db_last_committed_dateop  |    wal_lsn    |   q_xid    |          q_dateop          |    q_lsn     | state |        check_dateop        | n_mstr | n_slv |  flushed_lsn  | xid_offset
+-----------------------+----------------------------+---------------+------------+----------------------------+--------------+-------+----------------------------+--------+-------+---------------+------------
+    2015417146 | 2020-01-10 16:08:13.529417 | 33B8/104A3188 | 2015408553 | 2020-01-10 15:18:44.216581 | 33B8/F0E0850 | f     | 2020-01-10 16:08:14.227641 | swap   | swap  | 33B8/104A2670 |
+               |                            |               | 2015408553 | 2020-01-10 15:18:44.216581 |              | t     | 2020-01-10 16:08:14.238013 | swap   | qas   | 33B8/104A3188 | 2015408553
+<span class="o">(</span>2 rows<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TCapture Monitoring</a><ul>
+<li><a class="reference internal" href="#check-status-tcapture-processes">Check status Tcapture  processes</a></li>
+<li><a class="reference internal" href="#check-the-monitoring-table">Check the monitoring table</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tablefiltering.html"
+                        title="previous chapter">TCapture table level filtering</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="troubleshooting.html"
+                        title="next chapter">TCapture Troubleshooting</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/monitoring.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="troubleshooting.html" title="TCapture Troubleshooting"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tablefiltering.html" title="TCapture table level filtering"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

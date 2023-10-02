@@ -1,0 +1,341 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Adding a Primary node in TCapture &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="Adding a Replicated node in TCapture" href="addconsumer.html" />
+    <link rel="prev" title="TCapture Installation" href="installation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="addconsumer.html" title="Adding a Replicated node in TCapture"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="TCapture Installation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="adding-a-primary-node-in-tcapture">
+<span id="addproducer"></span><h1>Adding a Primary node in TCapture<a class="headerlink" href="#adding-a-primary-node-in-tcapture" title="Permalink to this headline">¶</a></h1>
+<p>Once you have TCapture installed on your system (check out the <a class="reference internal" href="installation.html#installation"><em>TCapture Installation</em></a> section. ), you just need to add configuration for the primary node .</p>
+<div class="section" id="configuring-a-primary-database-node">
+<h2>Configuring a primary database node<a class="headerlink" href="#configuring-a-primary-database-node" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>To set up TCapture, you must configure the primary database server - the postgreSQL database on which the Distribution Database and the primary databases will reside. This includes:</dt>
+<dd><ul class="first last simple">
+<li>Enabling and configure logical decoding</li>
+<li>Setting up replication system user</li>
+<li>Defining a node name  for the primary TCapture database</li>
+<li>Creating the Distribution Database</li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="enabling-and-configure-logical-decoding-editing-the-postgresql-configuration-file">
+<h2>Enabling and configure logical decoding: Editing the postgreSQL configuration file<a class="headerlink" href="#enabling-and-configure-logical-decoding-editing-the-postgresql-configuration-file" title="Permalink to this headline">¶</a></h2>
+<p>In order for TCapture to run, the <tt class="code docutils literal"><span class="pre">wal_level</span></tt> configuration parameter must be set in <tt class="code docutils literal"><span class="pre">postgresql.conf</span></tt>, which can be found underneath your data directory. It&#8217;s also a good idea to set <tt class="code docutils literal"><span class="pre">max_wal_senders</span> <span class="pre">and</span> <span class="pre">max_replication_slots</span></tt> to something reasonably high to give TCapture worker processes plenty of capacity:</p>
+<blockquote>
+<div># At the bottom of &lt;data directory&gt;/postgresql.conf</div></blockquote>
+<div class="highlight-sh"><div class="highlight"><pre><span class="c">##### logical decoding</span>
+<span class="nv">wal_level</span> <span class="o">=</span> logical
+<span class="nv">max_wal_senders</span> <span class="o">=</span> 10            <span class="c"># max number of walsender processes</span>
+<span class="nv">max_replication_slots</span> <span class="o">=</span> 18
+<span class="nv">track_commit_timestamp</span> <span class="o">=</span> on
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-up-replication-system-user">
+<h2>Setting up replication system user<a class="headerlink" href="#setting-up-replication-system-user" title="Permalink to this headline">¶</a></h2>
+<p>You must create a postgreSQL user for TCapture Replication Server. TC uses this login to access the primary database’s transaction log(wal) and the Distribution Database.
+The TCapture system user  must have superuser role.</p>
+<div class="highlight-sh"><div class="highlight"><pre>create user rdbbdr_user  superuser inherit login password <span class="s1">&#39;rdbbdr_pwd&#39;</span>;
+</pre></div>
+</div>
+</div>
+<div class="section" id="defining-a-node-name-for-the-primary-tcapture-database">
+<h2>Defining a node name  for the primary TCapture database<a class="headerlink" href="#defining-a-node-name-for-the-primary-tcapture-database" title="Permalink to this headline">¶</a></h2>
+<p>The primary database must have a node name defined for itself</p>
+</div>
+<div class="section" id="creating-the-distribution-database">
+<h2>Creating the Distribution Database<a class="headerlink" href="#creating-the-distribution-database" title="Permalink to this headline">¶</a></h2>
+<p>To complete the primary database configuration for TCapture you must create the Distribution Database. TC uses the
+Distribution Database to maintain its stable queue and metadata objects.</p>
+<div class="highlight-sh"><div class="highlight"><pre>create database rdb_db__&lt;node_name&gt;;
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-the-tc-primary-database">
+<h2>Configuring the TC primary database<a class="headerlink" href="#configuring-the-tc-primary-database" title="Permalink to this headline">¶</a></h2>
+<p>If a database is to be used as a producer or consumer, it must be added to a replication server using the tc_cli_xxx.sh command.
+The database server running the database must have been configured to support its access by a replication server</p>
+<p>Source the environment file on TC installation directory:</p>
+<div class="highlight-sh"><div class="highlight"><pre>. ../.rdbbdr_env.sh
+</pre></div>
+</div>
+<p>Move into the $RDBBDR directory:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nb">cd</span> <span class="nv">$RDBBDR</span>
+</pre></div>
+</div>
+<p>Run  TCSrvCTL &#8211;config as follow from the RDBBDR/bin directory:</p>
+<div class="highlight-sh"><div class="highlight"><pre>TCSrvCTL --config --type producer --node --host --port --user --passwd --db --rhost --ruser  --rport --rpasswd
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>example:</dt>
+<dd>define a primary node called swap on host edslab-qaspg01:5433 for primary db db01qas having rdb (replication database) on same host :</dd>
+</dl>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span> sh TC_srvctl.sh --config  --type producer --node swap --host edslab-qaspg01 --port 5433 --user db01 --passwd webqlty --db db01qas --rhost edslab-qaspg01 --ruser db01 --rpasswd webqlty -rport 5433
+Launching..
+rdbbdrconf:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/swap_rdb_bdr.conf
+</pre></div>
+</div>
+<p>where</p>
+<ul class="simple">
+<li>node          give a name to this primary node</li>
+<li>host          host where primary database run</li>
+<li>port          port where primary database  is listening</li>
+<li>user          tcapture user (superuser)</li>
+<li>passwd</li>
+<li>db            primary db name</li>
+<li>rhost         host containing replication database ( defined as rdb_db__&lt;node&gt;)</li>
+<li>rport         port where rdb is listening</li>
+<li>ruser         rdb user (superuser)</li>
+<li>rpasswd</li>
+</ul>
+<p>This command generate a configuration file  under $RDBBDR/conf/ named &lt;node&gt;_rdb_bdr.conf</p>
+<p>Run  TCSrvCTL &#8211;show to read the configuration file for node :</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>sh TC_srvctl.sh --show --node swap --type producer
+ Launching..
+ Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/swap_rdb_bdr.conf review
+ Primary Database:
+ node swap
+ db db01qas
+ host edslab-qaspg01
+ port 5433
+ user db01
+ <span class="nb">pwd </span>webqlty
+
+ RDB database:
+ rnode null
+ rdb rdb_db__swap
+ rhost edslab-qaspg01
+ rport 5433
+ ruser db01
+ rpwd webqlty
+</pre></div>
+</div>
+<p>Run  TCSrvCTL &#8211;setup as follow from the RDBBDR/bin directory:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span> sh TC_srvctl.sh --setup  --node swap --type producer
+Launching..
+Configuration file: /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/conf/swap_rdb_bdr.conf review
+Primary Database:
+node swap
+db db01qas
+host edslab-qaspg01
+port 5433
+user db01
+<span class="nb">pwd </span>webqlty
+
+RDB database:
+rdb rdb_db__swap
+rhost edslab-qaspg01
+rport 5433
+ruser db01
+rpwd webqlty
+
+&gt; Checking existance of database db01qas
+&lt; db01qas exists!
+&gt; Checking existance of database rdb_db__swap
+&lt; rdb_db__swap exists!
+&gt; Checking existance of schema _rdb_bdr in database db01qas
+&gt; Checking existance tables _rdb_bdr.walq__swap% in database db01qas exists!
+&gt; Checking existance tables _rdb_bdr.walq__swap% in database rdb_db__swap exists!
+Creating rdb  node _rdb_bdr structure on rdb_db__swap
+Creating rdb  node _rdb_bdr structure on db01qas
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>This command create :</dt>
+<dd><ul class="first last simple">
+<li>the replication database structure</li>
+<li>a replication slot &#8216;rdb_&lt;nodename&gt;_bdr&#8217;</li>
+<li>a publication of the queue table storing primary database transactions</li>
+</ul>
+</dd>
+</dl>
+<p>After a database has been added, a consumer can be created to receive transactions from this primary database, or the database can join an existing publication.
+If you&#8217;d prefer to get right into it, check out the <a class="reference internal" href="addconsumer.html#addconsumer"><em>Adding a Replicated node in TCapture</em></a> section.</p>
+<div class="section" id="start-tcapture-replication-server">
+<h3>Start TCapture Replication Server<a class="headerlink" href="#start-tcapture-replication-server" title="Permalink to this headline">¶</a></h3>
+<p>Run TCapture Replication Server on defined primary node :</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh runTCRepSrv.sh -n swap
+
+Launching..
+1:postgres 20754 17952  0 14:43 pts/0    00:00:00  |                       <span class="se">\_</span> sh runTCRepSrv.sh -n swap
+2:postgres 20768 20754  0 14:43 pts/0    00:00:00  |                           <span class="se">\_</span> sh runTCRepSrv.sh -n swap
+3:postgres 20795 20768 40 14:43 pts/0    00:00:00  |                           |   <span class="se">\_</span> /usr/bin/java -XX:-UsePerfData -Xms512m -Xmx1836m -XX:ErrorFile<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/log/repserver_pid_%p.log -Djava.library.path<span class="o">=</span>/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/bin -Duser.timezone<span class="o">=</span>UTC -Djava.awt.headless<span class="o">=</span><span class="nb">true</span> -Dlog4j2.contextSelector<span class="o">=</span>org.apache.logging.log4j.core.async.AsyncLoggerContextSelector -cp /var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/disruptor-3.3.0.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-core-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/log4j-api-2.2.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/postgresql-42.2.19.jar:/var/lib/pgsql/scripts/mycode/tcrepsrv-dev/lib/commons-cli-1.4.jar:. com.edslab.TCRepSrv -n swap
+
+
+INFO  | 2020-01-10 13:46:28.155 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:126<span class="o">)</span> - ***********************************************************************
+INFO  | 2020-01-10 13:46:28.155 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:126<span class="o">)</span> - ***********************************************************************
+INFO  | 2020-01-10 13:46:28.159 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:127<span class="o">)</span> - Running TCapture Replication Server <span class="k">for </span>node :swap
+INFO  | 2020-01-10 13:46:28.159 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:127<span class="o">)</span> - Running TCapture Replication Server <span class="k">for </span>node :swap
+INFO  | 2020-01-10 13:46:28.160 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:128<span class="o">)</span> - ***********************************************************************
+INFO  | 2020-01-10 13:46:28.160 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:128<span class="o">)</span> - ***********************************************************************
+INFO  | 2020-01-10 13:46:28.348 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:557<span class="o">)</span> - com.edslab.TCRepSrv is in running state
+INFO  | 2020-01-10 13:46:28.348 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:557<span class="o">)</span> - com.edslab.TCRepSrv is in running state
+INFO  | 2020-01-10 13:46:28.385 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:435<span class="o">)</span> - Running producer thread <span class="k">for </span>node master: swap having  node id 0
+INFO  | 2020-01-10 13:46:28.385 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:435<span class="o">)</span> - Running producer thread <span class="k">for </span>node master: swap having  node id 0
+INFO  | 2020-01-10 13:46:28.398 | <span class="o">[</span>main<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:735<span class="o">)</span> - Running TCapt <span class="k">for </span>node :swap
+INFO  | 2020-01-10 13:46:28.398 | <span class="o">[</span>main<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:735<span class="o">)</span> - Running TCapt <span class="k">for </span>node :swap
+INFO  | 2020-01-10 13:46:28.403 | <span class="o">[</span>TC-swap<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:164<span class="o">)</span> - TC-swap_466:  is in running state
+INFO  | 2020-01-10 13:46:28.403 | <span class="o">[</span>TC-swap<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:164<span class="o">)</span> - TC-swap_466:  is in running state
+INFO  | 2020-01-10 13:46:28.406 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:493<span class="o">)</span> - Running monitor thread <span class="k">for </span>node master: swap having  node id 0
+INFO  | 2020-01-10 13:46:28.406 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:493<span class="o">)</span> - Running monitor thread <span class="k">for </span>node master: swap having  node id 0
+INFO  | 2020-01-10 13:46:28.414 | <span class="o">[</span>main<span class="o">]</span> edslab.TMoni <span class="o">(</span>TMoni.java:547<span class="o">)</span> - Running TMoni <span class="k">for </span>node :swap
+INFO  | 2020-01-10 13:46:28.414 | <span class="o">[</span>main<span class="o">]</span> edslab.TMoni <span class="o">(</span>TMoni.java:547<span class="o">)</span> - Running TMoni <span class="k">for </span>node :swap
+INFO  | 2020-01-10 13:46:28.419 | <span class="o">[</span>TM-swap<span class="o">]</span> edslab.TMoni <span class="o">(</span>TMoni.java:210<span class="o">)</span> - TM-swap_99646  is in running state
+INFO  | 2020-01-10 13:46:28.419 | <span class="o">[</span>TM-swap<span class="o">]</span> edslab.TMoni <span class="o">(</span>TMoni.java:210<span class="o">)</span> - TM-swap_99646  is in running state
+INFO  | 2020-01-10 13:46:28.444 | <span class="o">[</span>TM-swap<span class="o">]</span> edslab.TMoni <span class="o">(</span>TMoni.java:328<span class="o">)</span> - TM-swap_99646:Monitor producer swap
+INFO  | 2020-01-10 13:46:28.444 | <span class="o">[</span>TM-swap<span class="o">]</span> edslab.TMoni <span class="o">(</span>TMoni.java:328<span class="o">)</span> - TM-swap_99646:Monitor producer swap
+INFO  | 2020-01-10 13:46:28.564 | <span class="o">[</span>TC-swap<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:521<span class="o">)</span> - TC-swap_466:Scanned:0
+INFO  | 2020-01-10 13:46:28.564 | <span class="o">[</span>TC-swap<span class="o">]</span> edslab.TCapt <span class="o">(</span>TCapt.java:521<span class="o">)</span> - TC-swap_466:Scanned:0
+INFO  | 2020-01-10 13:46:29.422 | <span class="o">[</span>main<span class="o">]</span> edslab.TCRepSrv <span class="o">(</span>TCRepSrv.java:576<span class="o">)</span> - main
+</pre></div>
+</div>
+</div>
+<div class="section" id="stop-tcapture-replication-server">
+<h3>Stop  TCapture Replication Server<a class="headerlink" href="#stop-tcapture-replication-server" title="Permalink to this headline">¶</a></h3>
+<p>Stop TCapture Replication Server on defined primary node :</p>
+<div class="highlight-sh"><div class="highlight"><pre>sh TC_srvctl.sh --shutdown -node swap
+1<span class="nv">$ </span> sh TC_srvctl.sh --shutdown -node swap
+Launching..
+Shutting down all threads in Replication Server
+Shutting down Replication Server <span class="k">for </span>node swap Fri Jan 10 13:46:06 UTC 2020
+Shutting down  Fri Jan 10 13:46:06 UTC 2020
+Shutting down  Fri Jan 10 13:46:06 UTC 2020
+Shutting down  Fri Jan 10 13:46:06 UTC 2020
+Shutting down  Fri Jan 10 13:46:06 UTC 2020
+Shutdown !!
+</pre></div>
+</div>
+<p>or using wrapper scripts, which kill TC Replication Server process if graceful shutdown exceed time limit</p>
+<div class="highlight-sh"><div class="highlight"><pre> sh stopTCRepSrv.sh -n prod1
+Still Shutting down..
+Still Shutting down..
+Graceful shutdown exceed <span class="nb">time </span>limit, going to <span class="nb">kill </span>TC Replication Server process
+TC Replication Server process killed !!
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Adding a Primary node in TCapture</a><ul>
+<li><a class="reference internal" href="#configuring-a-primary-database-node">Configuring a primary database node</a></li>
+<li><a class="reference internal" href="#enabling-and-configure-logical-decoding-editing-the-postgresql-configuration-file">Enabling and configure logical decoding: Editing the postgreSQL configuration file</a></li>
+<li><a class="reference internal" href="#setting-up-replication-system-user">Setting up replication system user</a></li>
+<li><a class="reference internal" href="#defining-a-node-name-for-the-primary-tcapture-database">Defining a node name  for the primary TCapture database</a></li>
+<li><a class="reference internal" href="#creating-the-distribution-database">Creating the Distribution Database</a></li>
+<li><a class="reference internal" href="#configuring-the-tc-primary-database">Configuring the TC primary database</a><ul>
+<li><a class="reference internal" href="#start-tcapture-replication-server">Start TCapture Replication Server</a></li>
+<li><a class="reference internal" href="#stop-tcapture-replication-server">Stop  TCapture Replication Server</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">TCapture Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="addconsumer.html"
+                        title="next chapter">Adding a Replicated node in TCapture</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/addproducer.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="addconsumer.html" title="Adding a Replicated node in TCapture"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="TCapture Installation"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

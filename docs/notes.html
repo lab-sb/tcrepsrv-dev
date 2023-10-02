@@ -1,0 +1,857 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TCapture Notes Issues Bugs &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tcapture-notes-issues-bugs">
+<span id="notes"></span><h1>TCapture Notes Issues Bugs<a class="headerlink" href="#tcapture-notes-issues-bugs" title="Permalink to this headline">¶</a></h1>
+<p>-bash-4.2$ more note/note-pc.txt
+ReplicaBdr</p>
+<p>RdbBdr is a Replication Server Multi master solution for PostgreSql databases</p>
+<p>the Engine is a combination of java , custom decoder lib , custom _rdb_bdr schema moving the data replication
+and  slots/publication/subsctiption configuration on posgres side</p>
+<p>The data decoded from wals is moved in primary nodes tables (walq_node tables) which are published</p>
+<p>the node joininig a primary node flow replication subscribe the walq primary node table and scan the walq to apply
+the replicate data locally.</p>
+<p>replication slots are created on primary nodes for :
+main decoderer slot
+each subscriptor node of its walq publication</p>
+<p>The java engine (StartReplication(could be renamed to RepSrvr )) duty is to  move data from decoder wal to walq table in a robust, secure, fast, reliable manner.
+The java engine/or/set of functions postgres (Consumer) duty is to scan the walq locally tables and apply changes to local databases managing filters and conflicts.</p>
+<p>&#8211; 04 apr</p>
+<p>pull wal CDC to walq table from primary
+pushwal function</p>
+<p>push from walq tables to slave
+runwal function
+scanwal function
+&#8211;</p>
+<p>&#8211; 07 apr
+custom mydecoder.c</p>
+<p>&#8211; 09 apr</p>
+<p>cross CDC between 2 nodes  with infinitive loop problem</p>
+<p>&#8211; 12 apr
+mnaged inifnite loop with  introduc of walq_node_xid</p>
+<p>&#8211; 16 apr
+java AppLocalDb sostituisce pushwal functions</p>
+<p>&#8211; 18 apr</p>
+<p>problema di unica xid con tante DML gestito replicandola come unica xid
+e non con n xid a destino</p>
+<p>&#8211; 24 apr</p>
+<p>funziona MultiMaster 2 nodes</p>
+<p>&#8211; 27 aprile</p>
+<p>funzionea MMR 3 nodes</p>
+<p>&#8211; 01 mag</p>
+<p>test carico  150 Tps su 2 nodi
+&#8211; 03 mag
+scirpt di configuraz
+add_primry_node
+join_a primary
+..</p>
+<p>configurazione folders
+path RDBBDR
+conf
+sql
+src
+bin
+run
+tmp
+ecc..</p>
+<p>&#8211; 04 mag</p>
+<p>Java StartReplication</p>
+<ul class="simple">
+<li>05 mag</li>
+</ul>
+<p>Java StartReplicationRDB ( con db di apooggio per  la replica)</p>
+<p>&#8211; 06 maggio</p>
+<p>skip xid se è un blocco contenente <a href="#id1"><span class="problematic" id="id2">walq_</span></a> operazioni</p>
+<p>&#8211; 08 mag
+introduzione truncate table walq su primary in java e su slave in runwalt
+introduzionie filtri scanwalf rdb_bdr.walq__cina_filtro</p>
+<p>&#8211; 09 mag
+- conflitti manca il filtor su tipo op v_opdml</p>
+<dl class="docutils">
+<dt>&#8211; rdb_help</dt>
+<dd>rdb_resumerep
+rdb_suspendrep
+rdb_replicateddl</dd>
+</dl>
+<p>_rdb_bdr.rdb_walq_urss_lastcommit   rinomina di walq__urss_offset</p>
+<blockquote>
+<div>_rdb_bdr.walq__cina_xid       rdb_walq_cina_xid
+_rdb_bdr.walq__urss           rdb_walq_urss
+_rdb_bdr.walq__urss_conflicts rdb_walq_urss_conflicts
+_rdb_bdr.walq__urss_filtro    rdb_walq_urss_filtro
+_rdb_bdr.walq__urss_log       rdb_walq_urss_log
+_rdb_bdr.walq__urss_offset    rdb_walq_urss_lastcommit</div></blockquote>
+<p>&#8211; FDW+db_link</p>
+<p>&#8211; da gestire la truncate dei walq_flor sia sul master che sugli slave tenenedo conto del gap per non peredere dati</p>
+<dl class="docutils">
+<dt>&#8211; TWrapperSQL.class  , ex:  sh runTWrapperSQL.sh /tmp/1.sql</dt>
+<dd>Wrapper per eseguire sql che non entri nel flusso di replica usando la _rdb_bdr.walq__flor_xid</dd>
+</dl>
+<p>&#8211; src/com/edslab/TCRepSrv.class
+&#8211; TAppl.java TCapt.java  TCRepSrv.java</p>
+<blockquote>
+<div>multithread  RepServer con tabella tc_process , con funzionalità stop/sart Master e Slaves con RS in esecuzione</div></blockquote>
+<p>&#8211; trace di ddl eseguite su  _rdb_bdr.walq__flor_ddl     con uso di event trigger
+&#8211; UPSERT ogni secondo su walq__flor_ddl</p>
+<dl class="docutils">
+<dt>&#8211; tc_cli_validator</dt>
+<dd><blockquote class="first">
+<div>valida il flusso di replica master e i vari slaves ..
+scrive su  master  _rdb_bdr.walq__syba_mon ;</div></blockquote>
+<p class="last">&#8211; da creare un thread  separato di monitoraggio continuo che popoli la tabella</p>
+</dd>
+<dt>&#8211; gestitre le truvcate walq  e walq_xid</dt>
+<dd>walqtrunc=30
+batch_size=1000
+loglevel=FINE
+log_hist=true</dd>
+</dl>
+<p>&#8211; modifca logger per usare log4j2cat.xml  su   log/TCRepSrv.log</p>
+<p>&#8211; -Duser.timezone=UTC in bin/runTCRepSrv.sh</p>
+<blockquote>
+<div>&#8211; varie  &#8212;&#8212;&#8211;</div></blockquote>
+<p>caching query altro thread
+docker
+truncate table wal_q con tabella parallela di switch
+healtcheck table in _rdb_bdr.walq__flor_mon</p>
+<blockquote>
+<div></div></blockquote>
+<p>architettura di tipo mesh</p>
+<p>tc_process                              configuro master e  di quale nodi sono slave , es :  flor M, flor slave di syba S e dl380 S
+pg_replication_slots    vedo di quale nodi sono master                           , es :  flor master per syba S e dl380 S</p>
+<p>deve finire tutto in tc_process o tc_monitor in modo da monitorare gli slaves rempoti (stato, position, dateop,ecc)</p>
+<p>&#8211; 30 08 2019</p>
+<blockquote>
+<div>TMoni.java per il monitoraggio di master, slave remoti , slave locali</div></blockquote>
+<dl class="docutils">
+<dt>&#8211; 01 09 2019</dt>
+<dd><p class="first">following features are not available:</p>
+<blockquote class="last">
+<div>Management User Interface
+Column level filtering
+Update/Update and Insert/Insert conflict management
+Enhanced cluster-wide monitoring
+Windows Server support</div></blockquote>
+</dd>
+<dt>&#8211; 02 09 2019</dt>
+<dd><dl class="first last docutils">
+<dt>rotate RollingFile in ../src/log4j2.xml</dt>
+<dd>&lt;level value=&#8221;OFF&#8221; /&gt; in log4j2
+INSERT INTO _rdb_bdr.tc_monit   ON CONFLICT  se q  è ststa truncate</dd>
+</dl>
+</dd>
+<dt>&#8211; 03 09 2019</dt>
+<dd><p class="first">rivedere le truncate di TCapt e TAppl
+occorre un thread Coordinator ??
+viste varie per query su tc_monit tc_proces walq__ddl xid ecc
+spostare walq__flor_ddl e walq__flor_xid su rdb_db__flor ??</p>
+<p class="last">refresh slave di TMON se db slave down da eccessione e esce</p>
+</dd>
+<dt>&#8211; 05092019</dt>
+<dd>modificata isXidCurrentNotManage in TCapt select exists( select 1 from &#8221; + walq + &#8220;_xid where xid_current &gt; ?  (dove ? è preso da select max(xid) from &#8221; + walq )
+in questo modo pare funzionare ,
+da verfificare i blob sul campo data (quanti byte di blob c&#8217;entrano??)</dd>
+<dt>&#8211; 09092019</dt>
+<dd>bug # java heap out of memory transazione commita parziale
+BEGIN &gt; bug #
+10:47:46.999 [TM-flor] INFO  com.edslab.TAppl - TM-flor_99350:&lt;scanned: 55
+Exception in thread &#8220;TC-flor&#8221; java.lang.OutOfMemoryError: Java heap space
+at java.util.Arrays.copyOf(Arrays.java:3332)
+at java.lang.AbstractStringBuilder.ensureCapacityInternal(AbstractStringBuilder.java:124)
+at java.lang.AbstractStringBuilder.append(AbstractStringBuilder.java:448)
+at java.lang.StringBuilder.append(StringBuilder.java:136)
+at org.apache.logging.log4j.core.pattern.LineSeparatorPatternConverter.format(LineSeparatorPatternConverter.java:64)
+at org.apache.logging.log4j.core.pattern.PatternFormatter.format(PatternFormatter.java:36)
+at org.apache.logging.log4j.core.layout.PatternLayout.toSerializable(PatternLayout.java:196)
+at org.apache.logging.log4j.core.layout.PatternLayout.toSerializable(PatternLayout.java:55)
+at org.apache.logging.log4j.core.layout.AbstractStringLayout.toByteArray(AbstractStringLayout.java:71)
+at org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender.append(AbstractOutputStreamAppender.java:108)
+at org.apache.logging.log4j.core.config.AppenderControl.callAppender(AppenderControl.java:99)
+at org.apache.logging.log4j.core.config.LoggerConfig.callAppenders(LoggerConfig.java:430)
+at org.apache.logging.log4j.core.config.LoggerConfig.log(LoggerConfig.java:409)
+at org.apache.logging.log4j.core.config.LoggerConfig.log(LoggerConfig.java:412)
+at org.apache.logging.log4j.core.config.LoggerConfig.log(LoggerConfig.java:367)
+at org.apache.logging.log4j.core.Logger.logMessage(Logger.java:112)
+at org.apache.logging.log4j.spi.AbstractLogger.logMessage(AbstractLogger.java:727)
+at org.apache.logging.log4j.spi.AbstractLogger.logIfEnabled(AbstractLogger.java:716)
+at org.apache.logging.log4j.spi.AbstractLogger.info(AbstractLogger.java:526)
+at com.edslab.TCapt.checkFilt(TCapt.java:348)
+at com.edslab.TCapt.receiveChangesOccursBeforTCapt(TCapt.java:596)
+at com.edslab.TCapt.run(TCapt.java:179)
+at java.lang.Thread.run(Thread.java:748)
+bug # &lt; END</dd>
+<dt>&#8211; 09092019 interfaccia grafica</dt>
+<dd><p class="first">postgres 11 e 12 e 9.X
+funzioni</p>
+<blockquote class="last">
+<div>tc_cli.sh -n flor -status down
+tc_cli.sh -n flor -status up
+...</div></blockquote>
+</dd>
+<dt>&#8211; 12092019</dt>
+<dd>sqlworkbench , symmericds
+docker e aws
+sicurezza rdbbdr_user
+parallelizzazione TCapt TAppl per performance</dd>
+<dt>&#8211; 15092019</dt>
+<dd><a class="reference external" href="http://www.tcapture.org/">http://www.tcapture.org/</a>
+in stile PostgreSQL Replicator
+LA <a class="reference external" href="https://postgresrocks.enterprisedb.com/t5/EDB-Technical-Updates-and-Alerts/EDB-Technical-Update-for-Postgres-Replication-Server-7-0-Limited/ta-p/4050">https://postgresrocks.enterprisedb.com/t5/EDB-Technical-Updates-and-Alerts/EDB-Technical-Update-for-Postgres-Replication-Server-7-0-Limited/ta-p/4050</a></dd>
+<dt>&#8211; 18092019</dt>
+<dd><p class="first">add VERSION file under rdbbdr
+aggiungere controlli su pg version pg up acc</p>
+<p>add installation steps:
+rpm , dockers, ecc
+vedi installation-rdbbdr_0.9.6
+Data Validator source and target database to compare the tables in schema
+BUG # In caso di definizione di master senza slave e startup del processo di replica la coda si riempe fino a raggiunger il walqtrunc point e quindi troncata con conseguente perdita di dati!!</p>
+<blockquote class="last">
+<div># quini alla truncate verificare che ci siano slots di sottoscrizione e che il max(xid) in <a href="#id3"><span class="problematic" id="id4">walq_</span></a> replicato sia appaiato al max(xid) del walq locale che vado a troncare
+# ad esempio funzione canBeTrunc() che verifica quanto sopra</div></blockquote>
+</dd>
+<dt>&#8211; 19092019</dt>
+<dd><p class="first">BUG # In caso di definizione di master senza slave e startup del processo di replica il log su TCRepsrv.log è ok ma su src/Tcapture&#8212;.log logga TAppl come mmirror di TCapt
+BUG#  In caso di start del processo di replica  e non ci sono transazioni _rdb_bdr.tc_monit è vuoto
+###  ci sono tabelle da togliere su schemi _rdb_bdr del master e del rdb_db_master</p>
+<dl class="last docutils">
+<dt># nel configurare lo slave losa di un primary nyci già configurato :</dt>
+<dd><ul class="first last simple">
+<li>cerca il file /var/lib/pgsql/scripts/mycode/rdbbdr-0.9.6/conf/losa_rdb_bdr.conf</li>
+<li>cerca il file /var/lib/pgsql/scripts/mycode/rdbbdr-0.9.6/conf/losa_log.conf</li>
+<li>errore relation &#8220;_rdb_bdr.tc_process&#8221; non esiste sullo slave losa</li>
+<li>errore  relation &#8220;walq__losa_xid&#8221; il los_db perche viene creata con l add_primry_node mentre qua è solo slave .. ma il Tappl se ne frega e non controlla...</li>
+<li>erroe /var/lib/pgsql/scripts/mycode/rdbbdr-0.9.6/conf/losa_bdr_rdb.conf not exists! sul primario quando TMon va a fare il check delgi slave</li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<ul>
+<li><dl class="first docutils">
+<dt>20092019</dt>
+<dd><p class="first last">#rivedere i messaggi di log  che sono poco chiari</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>21092019</dt>
+<dd><p class="first last"># audit delle truncate della walq_node e delle operazioni sulle _rdb_bdr.tc_process</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>22092019</dt>
+<dd><p class="first"># gestire le strutture temporanee pg_temp.. quando viene fatto un alter table
+# invece di tc_cli_add_primary_node... conf.. remote.. ecc..</p>
+<p># tcctl add node  &#8211; Adds a database configuration to your TC Replication server  configuration.</p>
+<blockquote class="last">
+<div><blockquote>
+<div><p>tcctl add node -n node -h host -u -p -pwd -db -rh -ru -rp -rpwd -rdb</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>tcctl setenv nodeapps -n node_name {-t name=val[,name=value,...]</dt>
+<dd><blockquote class="first">
+<div><p>tcctl setenv -n nyci -t waltrunc=1000000, filter=on</p>
+</div></blockquote>
+<dl class="last docutils">
+<dt>tcctl config  &#8211; Displays the configuration for a node</dt>
+<dd><p class="first last">tccl config     -n nycy</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>25092019</dt>
+<dd><p class="first last">tc_process tc_monit n_master diventa n_mstr n_slave diventa n_slv</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>27092019</dt>
+<dd><blockquote class="first">
+<div><dl class="docutils">
+<dt>&#8211;     Creating a subscription that connects to the same database cluster (for example, to replicate between databases in the same cluster or to replicate within the same database) will only succeed if the replication slot is not created as part</dt>
+<dd><p class="first last">of the same command.
+Otherwise, the CREATE SUBSCRIPTION call will hang. To make this work, create the replication slot separately (using the function pg_create_logical_replication_slot with the plugin name pgoutput)
+and create the subscription using the parameter create_slot = false.
+This is an implementation restriction that might be lifted in a future release.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p class="last">&#8211; setup consumer node : inserisce con id = 0 ma se ce ne sono più di 1 ?! da gestire</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>28092019</dt>
+<dd><p class="first last">&#8211; check versione pg comaptibile con tc
+&#8211; check version TC , all&#8217;installazione/setup inserisce la versione , poi il controllo viene fatto con il file TCVer</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="docutils">
+<dt>-29092019</dt>
+<dd><ul class="first last simple">
+<li>runTCRepSrv -n node check che non sia già attivo e deviazione error log su TCapt..._err.log</li>
+<li>com/edslab/TCSrvCTL.java unset -node -producer/consumer</li>
+</ul>
+</dd>
+<dt>-30092019</dt>
+<dd><ul class="first last simple">
+<li>gestito lo stato di messa in down nel caso di eccezione su loadProps per TCapt e TAppl manca TMoni</li>
+</ul>
+</dd>
+<dt>-01102019</dt>
+<dd><blockquote class="first">
+<div><blockquote>
+<div><ul class="simple">
+<li>da gestire i logs( togliere i System.out.println  e sostituire con LOGGERS.info / LOGGERS.error</li>
+<li>togliere i system.exit (tranne che sulla classe principale TCRepSrv)</li>
+</ul>
+</div></blockquote>
+<p>-ripulire i log messages
+- gestire tc_process start stop da sh TC_srvctl.sh -start -node nyci -type producer/monitor/consumer</p>
+</div></blockquote>
+<dl class="last docutils">
+<dt>-01102019</dt>
+<dd><blockquote class="first">
+<div># BUG  mentre lo slave razzola le transazioni  non controlla se è stato messo a stop nel tc_process quindi occorre aspettare il termine della razzolata che in caso sia molto indietro potrebbe essere lunghissimo
+# messa toppa con limit nel selectXid ( questo però da problemi nel caso di truncate che richiama la selectXid per svuotare la coda .... meglio allora l opzione senza limit</div></blockquote>
+<p>usare modo di versionare il codice
+approfondire log4j threadcontext (in particolare diffenti livelli di log per i vari threads)</p>
+<blockquote class="last">
+<div>TCRepSrv trasformare in thread e da  TC_srvctl.sh -stop -repsrv -node &lt;node_name&gt; che chiama una funzione nel thread TCRepSrv che fa lo stop dei vari thread (TCapt TAppl TMoni) ed esce pulito</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+<blockquote>
+<div>review pg-jdbc per spunti
+revire gitlab github per versioning (private use)</div></blockquote>
+<ul>
+<li><dl class="first docutils">
+<dt>02102019</dt>
+<dd><p class="first last">Reload log4j.xml at runtime  in modo da poter cambiare il livello di log senza restart
+# messa toppa al BUG 01102019 con il limt a 500 nella selectXid() in TAppl</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="docutils">
+<dt>-03102109</dt>
+<dd><dl class="first docutils">
+<dt>da implementare:</dt>
+<dd><blockquote class="first">
+<div><ul class="simple">
+<li>cryptog password</li>
+<li>check versione Community Edition e disattivazione delle funzionalità : ad esempio start di TMoni  &amp;&amp; checkVersioneCE ,</li>
+<li>propagazione SQL DML dal nodo master a tutti i consumer  con un TCWrapper_DML (diverso da CWrapper_SQL) insernedo direttamnte su walq_node e allo slave arriva come campo data da eseguire)</li>
+</ul>
+<dl class="docutils">
+<dt>V - stopTCepSrv  graceful  - mette a stop tutti ithread e loppa per check che siano stopped e a questo punto system.exit se supera il timeout di graceful shutdown lo killa</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>in loppa di TCRepSrv controlla operations not managed , in questo caso trova n_operations=&#8217;shutdwon&#8217; messo da un processo esterno che mette tutti i thread in shutdown</dt>
+<dd><p class="first last">mette tutti i thread in stop e state in shutdown ed esce</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<ul class="simple">
+<li>fare uno stroico del tc_monit in modo da avere una tendenza (converge,diverge,stabile) sulle ultime delta o gap</li>
+<li>check conflitti da Moni in base a data check e data  conflict ( e status false dello slave ) ovvero se è down (stato false) vado a pescare la data ultimo conflitto e se è vicina al check lo visualizzo in tc_monit</li>
+</ul>
+</div></blockquote>
+<ul class="last">
+<li><dl class="first docutils">
+<dt>sonda</dt>
+<dd><p class="first last">metto in una tabella (id, ready_to_send,now())
+TCapt quando passa nel giro vuoto(ovvero quando fa l upsert su wal_ddl) lo spara su walq_nodo con stato send
+TAppl lo trova su  walq_node e lo esegue aggiungendo applyed e la sua data di esec : now() che sarà di un delta rispetto al now() del ready_to_send , questo delta ci dice il gap tra una transaz al master e la esec allo slave</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<ul class="last simple">
+<li>CommunityEdition BusinessEdition -&gt;  StandardEdition  / EnterprisEdition</li>
+</ul>
+</dd>
+<dt>-04102019</dt>
+<dd>gestito stopTCepSrv che richiama TCSrvCTL shutdown e gestisce il gracefull shutdown time limit e poi lo stronca
+# in caso di start di TCapt e deve frullar moltissime transazioni applicate come slave , fino a quando non le ha smazzate tuttte non logga perche busy</dd>
+<dt>&#8211; deployare una versione con struttura definitiva       tcrepsrv-0.9.7.rhel7.x86_64.tar.gz</dt>
+<dd><dl class="first last docutils">
+<dt>come ramo distinto da quello di dev  ovvero un sotto insieme</dt>
+<dd>la struttura dev dev-0.9.7.001 ha formato dev-MainVersion(0)-SubVersion(9)-X-YYY
+la struttura non dev 0.9.7 ha formato MainVersion(0)-SubVersion(9)-X</dd>
+</dl>
+</dd>
+<dt>&#8211; possibile parallelizzazione</dt>
+<dd><dl class="first docutils">
+<dt>partition della tabella walq_node</dt>
+<dd><dl class="first last docutils">
+<dt>abbiamo walq_node_11</dt>
+<dd>walq_node_2
+walq_node_3
+walq_node_4</dd>
+</dl>
+</dd>
+</dl>
+<p>che vengono alimentati con un modulto sul txid (modulo 4)</p>
+<p class="last">il TAppl viene diviso in 4 thread ognuno segue walq_node_x e in modo syncronyzed sull oggetto esegue la transazione e committa in ordine
+il commit in ordine può essere fatto mantenendo la lista dei txid in gestione in quell istante ai vari threads e guindi uno può committare se non esiste nessuno con txid &lt; in lista</p>
+</dd>
+<dt>&#8211; in version 11 la funzionalità di truncate viene replicata <span class="classifier-delimiter">:</span> <span class="classifier">Replicate TRUNCATE activity when using logical replication</span></dt>
+<dd>questo ha impatto sulla trucate delle walq_node  che potrebbero essere troncate a valle (lo slave prima che le abbia consumate)
+occorre coordinare la truncate in modo che siano sincronizzati e consumati ...
+un modulo coordinator che quando la walq_node supera il limite e gli slave sono allineati o quasi spegne il TCapt finisce di scodare i TAppl  diabilita le subscr tronca la tabella negli slave e nel master e riabilita tutto</dd>
+<dt>-08102019</dt>
+<dd><ul class="first simple">
+<li>txid wraparound</li>
+<li>initial load  , attivazine replica - pg_dpump con xid e poi restore e set dell xid_offset a xid di restore</li>
+<li>modulo maintenance (thread) che check in tc_monit che il lag tra      xid_offset e q_xid sia vicino e stoppa slave local master local e aspetta che gli slave remoti smazzino le xid rimanenti e tronca le walq_node e poi riattiva tutto.</li>
+</ul>
+<blockquote>
+<div>e salavare la wid di truncate da qualche parte e poi il check lo fa in base al superamento di un threshold sulle wid ( pwerchè le xid possono avere dei salti anche importanti)</div></blockquote>
+<ul class="simple">
+<li>aggiungere a walq_node_xid lo slave di provenienza , field n_slv</li>
+</ul>
+<dl class="docutils">
+<dt>&#8211; la funzionalità di truncate della vers 11 di postgres viene bypassata implementando la create publication con :</dt>
+<dd><dl class="first last docutils">
+<dt>CREATE PUBLICATION insert_only FOR TABLE mydata      WITH (publish = &#8216;insert&#8217;);</dt>
+<dd>modify  com/edslab/TCSrvCTL.java   String qq= &#8221; create publication &#8220;+node+&#8221;_publ for table _rdb_bdr.walq__&#8221;+node+&#8221;  WITH (publish = &#8216;insert&#8217;);&#8221;;</dd>
+</dl>
+</dd>
+</dl>
+<p class="last">&#8211; da aggiungere la     big quey check_maintenance e la walq_master_trunc nella TMoni in modo da avere anche un alert di lags tra le varie code e xid e truncate threshold</p>
+</dd>
+<dt>-09102019</dt>
+<dd>TWrapperSQl di un update di milioni di record occorrono minuti prima che lo smazzi
+ByteBuffer usare in TCapt al posto delle operazioni su String</dd>
+<dt>-10102019</dt>
+<dd>aggiungere campo sorgente in _rdb_bdr.walq__urss_xid</dd>
+<dt>-11102019</dt>
+<dd>fdw della <a href="#id5"><span class="problematic" id="id6">walq_</span></a> in modo che il contenuto &#8220;data&#8221; possa essere caricato su un sistema eterogeneo
+hash ?!! del data /transazione in walq
+database chiave valore  ( txid, data) come pre  walq_node da cui poi selezionare i record per walq_node</dd>
+<dt>-16102019</dt>
+<dd><blockquote class="first">
+<div><blockquote>
+<div><dl class="docutils">
+<dt>test con queue ConcurrentLinkedQueue e multithreading Worker process</dt>
+<dd>ispirandosi a <a class="reference external" href="https://stackoverflow.com/questions/49811474/fastest-way-to-process-a-file-db-insert-java-multi-threading">https://stackoverflow.com/questions/49811474/fastest-way-to-process-a-file-db-insert-java-multi-threading</a></dd>
+<dt>io faccio in com/edslab/TCaptureTest.java :</dt>
+<dd><blockquote class="first">
+<div>myquery = toString(buffer);</div></blockquote>
+<p class="last">mylsn = stream.getLastReceiveLSN().asString();
+queue.add(mylsn+&#8221;#&#8221;+myquery );</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="docutils">
+<dt>ma vedendo <a class="reference external" href="https://github.com/tolitius/mongodb-write-performance-playground/blob/master/java/driver.mods/com.mongodb/DBApiLayer.java">https://github.com/tolitius/mongodb-write-performance-playground/blob/master/java/driver.mods/com.mongodb/DBApiLayer.java</a>:</dt>
+<dd><dl class="first last docutils">
+<dt>capisco che  invece di:</dt>
+<dd>Queue&lt;String&gt; queue = new ConcurrentLinkedQueue&lt;&gt;();</dd>
+</dl>
+</dd>
+<dt>posso</dt>
+<dd><blockquote class="first">
+<div><p>Queue&lt;WalTrans&gt; queue = new ConcurrentLinkedQueue&lt;WalTrans&gt;();</p>
+<p>dove WalTrans  è:</p>
+</div></blockquote>
+<p class="last">static class WalTrans {</p>
+</dd>
+<dt>WalTrans( LogSequenceNumber a , ByteBuffer b ){</dt>
+<dd>lsn = a;
+bb = b;</dd>
+</dl>
+<p>}</p>
+<p>final LogSequenceNumber lsn;
+final ByteBuffer bb;</p>
+</div></blockquote>
+<p>}</p>
+<blockquote class="last">
+<div><p>e posso accedere;</p>
+<blockquote>
+<div><blockquote>
+<div>while (( c = queue.poll()) != null ){</div></blockquote>
+<p>x = c.bb ;</p>
+</div></blockquote>
+</div></blockquote>
+</dd>
+<dt>-17102019</dt>
+<dd><p class="first">la Queue&lt;WalTrans&gt;  viene alimentata da TCapt (TcaptureTest) che ne è il produttore
+viene consumata dai thread TWork_XX che ne sono i consumatori</p>
+<p>consumate le coppie ByteBuffer ( che diventa Stringa txid#data ) e LSN
+queste vanno aggiunte all stmt.addBath in modo che siano ordinate e che vengano committate alla fine di ogni txid.
+per questo metterei tutto sotto  una mappa
+Map&lt;TXID,List&lt;LSN&gt;&gt; m = new HashMap&lt;TXID,List&lt;LSN&gt;&gt;();</p>
+<p>ovvero ogni txid ha una serie di LSN</p>
+<p>in più vanno agganciati
+ad ogni lsn i data String con un altra mappa
+Map&lt;LSN, String&gt; = new HashMap&lt;LSN,String&gt;();</p>
+<p class="last">a questo punto i threads TWork_XX sono diventati produttori per queste mappe
+occorre creare dei consumatori che scansionano le mappe riordinate per txid e per ogni lsn vanno sull&#8217;altra mappa e prendono data String per poi costruire  stmt.addBath e commit con la logica originaria di TCapture</p>
+</dd>
+</dl>
+<p>vedere debezium  per spunti molto interessanti:
+<a class="reference external" href="https://github.com/debezium/debezium/blob/master/debezium-connector-postgres/src/main/java/io/debezium/connector/postgresql/connection/pgoutput/PgOutputMessageDecoder.java">https://github.com/debezium/debezium/blob/master/debezium-connector-postgres/src/main/java/io/debezium/connector/postgresql/connection/pgoutput/PgOutputMessageDecoder.java</a></p>
+<blockquote>
+<div>vedere nuove versioni jdbc postgres driver</div></blockquote>
+<ul>
+<li><dl class="first docutils">
+<dt>04112019</dt>
+<dd><blockquote class="first">
+<div><dl class="docutils">
+<dt>TCapt</dt>
+<dd><dl class="first last docutils">
+<dt>stream -&gt; lsn,buffer  - queue add &lt;WalTrans&gt;</dt>
+<dd><p class="first last">-&gt; TWorkP_X   queue poll - check vari - map &lt;xid , &lt;lsn&gt;&gt;  e &lt;lsn,data&gt;  - &lt;xid,&lt;wrkrs&gt;&gt;
+-&gt; TWorkC     manage  min xid di &lt;xid,&lt;wkrs&gt;&gt;   - for each xid, lsn - lsn data e commit</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="last docutils">
+<dt>TAppl</dt>
+<dd><blockquote class="first">
+<div><p>xid  from walq__nodemst  con xid &gt; xid_offset limit 500 -  for each xid get data order by wid - check vari - execute (data) - update offset e walq_node_xid</p>
+<p>select xid,lsn,data   - queue add xid oppure select lista xid soltanto da passare in queue lasciando la select di data e lsn ai workers</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>-&gt; TAWorkP_X           queue poll -  select data,lsn from walq_nodemst where xid = xid (polled)</dt>
+<dd><dl class="first last docutils">
+<dt>check vari (filtri)</dt>
+<dd><p class="first last">map &lt;xid , &lt;lsn&gt;&gt;  e &lt;lsn,data&gt;  - &lt;xid,&lt;wrkrs&gt;&gt;</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+<p>altra opzione:</p>
+<blockquote class="last">
+<div><p>prendo la granularità delgi lsn e non xid . ovvero faccio il lavoro simile al TCapt - TWorkP che lavora su una queue di lsn, buffer
+diventa:</p>
+<p>lsn from walq__nodemst  con xid &gt; xid_offset limit 500  -</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="docutils">
+<dt>&#8211; 05112019</dt>
+<dd><dl class="first last docutils">
+<dt>TCapt -&gt; passare stream in TStructures per aggiornare puntatore :</dt>
+<dd><blockquote class="first">
+<div>stream.setAppliedLSN(stream.getLastReceiveLSN());  ovvero stream.setAppliedLSN(lsn)  dove lsn è quello gestito da TWorkC
+stream.setFlushedLSN(stream.getLastReceiveLSN());  idem</div></blockquote>
+<p>isXidCurrentinWal in TWorkP dee impostare uno skipp (BoolTxid) sennò viene ripetuto inutilmente.</p>
+<p class="last">le map di xid,&lt;lsn&gt; e &lt;lsn,data&gt; vanno rimosse le entry elaborate
+ancora da gestire la truncate dei walq_node</p>
+</dd>
+</dl>
+</dd>
+<dt>&#8211; 07112019</dt>
+<dd>da rivedere il catch delle eccezzioni e i logs trace/info
+far girare il rep server su un nodo a se ?!
+togliere schema _rdb_bdr da db master , implica spostare walq__node_xid</dd>
+<dt>&#8211; 20112019</dt>
+<dd>rimessa la truncate nel giro a vuoto del TCapt . la connessione è condivisa con TWorkP/C e quindi eredita il set autocommit fals messo in TWorkP
+da vedere il truncate del walq_xid che  e il Tappl che se ristrutturato con i thread come TCapt ne avrà un comportamento simile.</dd>
+<dt>&#8211; 22112019</dt>
+<dd><blockquote class="first">
+<div><blockquote>
+<div>gestire eccezzioni tirando giu il thread di appartenenza , testare mettendo errori nei sotto thread e vedere che il thread principale va in stato down
+gestire conflitti</div></blockquote>
+<p>aggiungere  :  .. associata alla _rdb_bdr.walq__master_log del ../sql/consumer_structure_rdb_rdbbdr.sql
+CREATE SEQUENCE IF NOT EXISTS _rdb_bdr.walq__master_wid_seq</p>
+</div></blockquote>
+<p>START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1;</p>
+<blockquote>
+<div>in questo caso:
+CREATE SEQUENCE IF NOT EXISTS _rdb_bdr.walq__urss_log_wid_seq</div></blockquote>
+<p>START WITH 1
+INCREMENT BY 1
+NO MINVALUE
+NO MAXVALUE
+CACHE 1;</p>
+<blockquote class="last">
+<div>e alter table walq__urss_log alter wid set default nextval(&#8216;walq__urss_log_wid_seq&#8217;::regclass);</div></blockquote>
+</dd>
+<dt>&#8211; 25112019</dt>
+<dd><p class="first">cpu alte con TAppl attivo
+non elabora fino all ultima transazione il TAwrkC ma il wid lo setta bente Tappl
+seguire jdbc tips best practice: no connessini condivise tra i thread , no string concatenation m a usare bind variabile ? , usare prepared statemnet e batch, no execute diretto. ( questo lo facevo già nella vecchia version)
+migliora anche la old version??</p>
+<p class="last">il campo data termina con ; &#8211; nodemstr
+questo va  bene se il TAppl esegue st.execute(query) . ma se esegue st.addBatch(quesry)  i ; danno noia : org.postgresql.util.psqlexception too many update results were returned
+quindi va tolto il ; alla fine del campo data   , sostituito in TWorkP con scut = s.substring(mydmlpos + 1, s.length() -1 );</p>
+</dd>
+<dt>&#8211; 26112019</dt>
+<dd><ul class="first last simple">
+<li>valutare come togliere connection condivise tra i thread , impliczioni su connection.setAutocommit(false); add.batch(query), executeBatch...</li>
+<li>String concatenation sositure con i bind variables (?,?,?) ...</li>
+<li>gestire eccezioni e state down dei sottothread</li>
+<li>truncate walq e walq_xid ( thread indipendente che gestisce?)</li>
+<li>multithread TWorkP può andare n errore e causare bug inconsistenza di una xid inserita + volte. da rivedere come capire che un thread ha fatto la xid ed è andato oltre</li>
+<li>code versioning</li>
+<li>intellij pulire codice</li>
+</ul>
+</dd>
+<dt>&#8211; 03122019</dt>
+<dd>#DONE#  github <a class="reference external" href="https://github.com/lab-sb/tcrepsrv-dev/">https://github.com/lab-sb/tcrepsrv-dev/</a>
+#NOTA#  due filoni di sviluppo - devedition - standardedition
+#DONE#  <a class="reference external" href="http://sbrandani.alwaysdata.net/tcapture/">http://sbrandani.alwaysdata.net/tcapture/</a> mysphinx</dd>
+<dt>&#8211; 16122019</dt>
+<dd><dl class="first last docutils">
+<dt>#CHECK#099      run del TC Rep Server da un nodo (sganciato dai nodi db replicati)</dt>
+<dd>sh runTCRepSrv.sh -n prod4
+sh runTCRepSrv.sh -n prod3</dd>
+</dl>
+</dd>
+<dt>&#8211; 18122019</dt>
+<dd><blockquote class="first">
+<div>#CHECK#099      TCSrvCTL.java setup con user diverso da rdbbdr_user e setup con rdb_db__&lt;node&gt; su db diverso dal db di &lt;node&gt;</div></blockquote>
+<dl class="last docutils">
+<dt>#NOTA#118   TAppl.java      rimesso execute diretto per catch dell&#8217;eccezione e insert nella tabella conflict :</dt>
+<dd><blockquote class="first">
+<div>str.execute(query);</div></blockquote>
+<dl class="last docutils">
+<dt>//str.addBatch(query); va poi gestita l eccezione per inserire nel conflict</dt>
+<dd>con il addBatch e il commit a fine transazione  non riesco a gestire il conflitto ( da rivedere)</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>&#8211; 19122019</dt>
+<dd><blockquote class="first">
+<div>#ISSUE da fare create subscription da gestire  copy_data (boolean) - The default is true. ( ma si vuole dare l&#8217;opzione false)</div></blockquote>
+<p class="last">da fare</p>
+</dd>
+<dt>&#8211; 13012020</dt>
+<dd><dl class="first last docutils">
+<dt>in mysphinx a complete example con :</dt>
+<dd>drop_all_fk_constraint.sql
+incremnet_by_4_per_all_mmr_4nodes.sql
+set_value_sequnece_0_mil.sql
+fix_primary_key_missing.sql</dd>
+</dl>
+</dd>
+<dt>&#8211; 14012020</dt>
+<dd><p class="first">#BUG#100 eccezione too long not fit in columns:
+#solved#100  modificata _rdb_bdr.walq__master_conflicts seguenti colonne in text:</p>
+<blockquote class="last">
+<div>state text,
+message text,
+detail text,
+hint text,
+context text,</div></blockquote>
+</dd>
+<dt>&#8211; 15012020</dt>
+<dd><dl class="first docutils">
+<dt>1- utente rdbbdr_usr e permessi grant in sql script</dt>
+<dd>#attenzione: usando db01 user da problemi appliativi perchè imposta la search_path a _rdb_bdr</dd>
+<dt>2- #BUG                 eccezione da gestire se lib non esiste allo startup o wal_level=logical not set</dt>
+<dd>#SOLVED              mette in status down il thread master</dd>
+<dt>3-  #BUG                il monitor genera troppe connessioni</dt>
+<dd>#SOLVED         inseriti stmt ,result set , connection , close</dd>
+<dt>4-  #BUG                perde prima transazione se il sistema è nuovo !!</dt>
+<dd>#SOLVED         (da testare ancora) alla definizione TC_srvctl setup , fa un upsert su walq_node_ddl</dd>
+</dl>
+<p>5- #ISSUE               pg_temp se alter table da gestire</p>
+<p>riprendere la TCVer rdbbdr-dev-0.9.8.006</p>
+<dl class="last docutils">
+<dt>6-  #BUG#101</dt>
+<dd><dl class="first last docutils">
+<dt>#SOLVED#101: messo su wid invece che xid: select distinct xid from walq__qas where wid &gt; (select last_offset from  walq__qas_offset )</dt>
+<dd>messo fuori dal loop update walq_node_offset l&#8217;ulitmo wid preso nel loop (prima ci andava il primo wid)
+opzione aggiuntiva : select distinct xid from walq__qas where wid &gt; (select last_offset from  walq__qas_offset ) and xid &lt;&gt; (select xid_offset from  walq__qas_offset ) order by xid limit 500;</dd>
+</dl>
+</dd>
+<dt>7- #BUG#102 conseguente al #101  ovvero  order by xid riordina in modo errato se una transaz è terminata prima diuna precedente, va ordinato per dateop</dt>
+<dd>select distinct xid,dateop from _rdb_bdr.walq__prod2 where wid &gt; (select last_offset from _rdb_bdr.walq__prod2_offset )order by dateop limit 500;</dd>
+</dl>
+</dd>
+<dt>&#8211; 17012020</dt>
+<dd>#BUG#103        search_path=&#8217;_rdb_bdr&#8217; su user rdbbdr_user genera errore se viene richiamata una funzione public (ex. ll_to_earth è in default in un campo tabella)
+#SOLVED#103     search_path=&#8217;_rdb_bdr&#8217;,&#8217;public&#8217;</dd>
+<dt>&#8211; 20012020</dt>
+<dd><p class="first">v- check user rdbbdr_user su db prod - e user differente su rdb</p>
+<p class="last">#TODO#108       walq_node_xid aggiungere campo di node_name di provenienza
+#CHECK#100      prova 3 nodi mmr script di configur
+#NOTA#119       prova pg_basebackup e sincr con tcapture tutto in in un comando
+#TODO#109       tabella storico conflitti e pulizia tabella conflitti automatica quando offset è maggiore
+#TODO#110       monitor script che looppa e incrocia tc_proces tc_monit conflict filter e last sql nei vari processi - in stile tc_cli_validator e che faccia anche la topology
+#TODO#111       TC_srvctl confirmation messages on each choice (at least unset)</p>
+</dd>
+<dt>&#8211; 21012020</dt>
+<dd><p class="first">#CHECK#101 versione postgres 9.6 ?? funziona??
+#NOTA#120</p>
+<blockquote>
+<div>prd_db=# create table prova (aa serial, ab varchar(20) default &#8216;prd&#8217; , ac timestamp default now(), ad bigint default txid_current());
+prd_db=# alter table prova add primary key (aa,ab);</div></blockquote>
+<p class="last">#BUG#104 NON BLOCCANTE - MISSING INFORMATION - se rdb è su altra istanza TMoni non popola la tc_monit per il record relativo al replication slot rdb_prd_bdr
+#SOLVED#104 aggiunta union per il ramo slot rdb_prd_bdr not exits per questo caso che mancherà delle informazioni su questo slot e il suo stato</p>
+</dd>
+<dt>&#8211; 22012020</dt>
+<dd><dl class="first docutils">
+<dt>#TODO#112 legge conf file e mette info in una tabella in modo per esempio da rileggere la variabile filter al volo</dt>
+<dd>TC_srvctl &#8211;filter=on volatile
+TC_srvctl &#8211;reloadconf &#8211;node</dd>
+</dl>
+<p>#TC_srvctl &#8211;setfilter &#8211;schema &#8211;table &#8211;operations [D/I/U]
+#FEATURES# slave heterogeneous datatbase type</p>
+<p class="last">#DONE# sh TC_srvctl.sh &#8211;marker &#8211;node swap &#8211;type consumer &#8211;producer qas [&#8211;next_xid/&#8211;set_xid=&lt;xid number&gt;]</p>
+</dd>
+<dt>&#8211; 24012020</dt>
+<dd><dl class="first last docutils">
+<dt>#TODO]</dt>
+<dd>_rdb_bdr.tc_monit manca wid offset e dataop dell offset</dd>
+</dl>
+</dd>
+<dt>&#8211; 27012020</dt>
+<dd><dl class="first last docutils">
+<dt>#DONE# TC_srvctl.sh &#8211;topology &#8211;node qas &#8211;detail</dt>
+<dd><p class="first">qas MASTER up/down
+qas &lt;&#8211; prd active
+qas &#8211;&gt; prd enable</p>
+<p class="last">prd MASTER up/down
+prd &lt;&#8211; qas not_active
+qas &#8211;&gt; prd enable</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--28012020</span></kbd></td>
+<td><p class="first">#ISSUE# quando fa la creazione della subscription con copy_data = true - partono dei temporary replication slots che si chiamano : &lt;sub_name&gt;_45800913_sync_2720590</p>
+<dl class="docutils">
+<dt>#FEATURES# automatizzare:</dt>
+<dd>setup replica e sync directory : (nam3ab) pg_basebackup -h ahost.edslab.it -U barman -p 5432 -D/ backup/pg01 -P -Xs -R -v -l backup_pg01ng</dd>
+</dl>
+<p class="last">#DONE#  select _rdb_bdr.monitor_qas_to_(&#8216;prd&#8217;);</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--04022020</span></kbd></td>
+<td>#
+#               procedura per sincronizzare master con slave:
+# <a class="reference external" href="https://www.percona.com/blog/2018/11/30/postgresql-streaming-physical-replication-with-slots/">https://www.percona.com/blog/2018/11/30/postgresql-streaming-physical-replication-with-slots/</a>
+# poi commit
+# stop master
+# stop slave
+# setup TC masters
+# setup TC slaves
+# start masters
+# start slaves</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/notes.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

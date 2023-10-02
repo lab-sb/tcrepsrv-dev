@@ -1,0 +1,198 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Multi Master Considerations &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="multi-master-considerations">
+<span id="mmrconsider"></span><h1>Multi Master Considerations<a class="headerlink" href="#multi-master-considerations" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div>Waht is replication?
+From the Information Management Glossary:</div></blockquote>
+<p>The process of copying a portion of database from one environment to another and keeping the subsequent copies of the data in sync with the original source. Changes made to the original source are propagated to the copies of the data in other environments</p>
+<blockquote>
+<div>An increasing number of organizations run applications that depend on  multi-master replication between remote sites.
+I have worked on several such implementations recently.  This article summarizes the lessons from those experiences that seem most useful when deploying multi-master on existing as well as new applications.</div></blockquote>
+<p>Let&#8217;s start by defining terms.  Multi-master replication means that applications update the same tables on different masters, and the changes replicate automatically between those masters.
+Remote sites mean that the masters are separated by a wide area network (WAN), which implies high average network latency of 100ms or more.
+WAN network latency is also characterized by a long tail, ranging from seconds due to congestion to hours or even days if a ship runs over the wrong undersea cable.</p>
+<dl class="docutils">
+<dt>With the definitions in mind we can proceed to the lessons.  The list is not exhaustive but includes a few insights that may not be obvious if you are new to multi-master topologies.</dt>
+<dd>Also, I have omitted issues like monitoring replication, using InnoDB to make slaves crash-safe, or provisioning new nodes.  If you use master/slave replication, you are likely familiar with these topics already.</dd>
+</dl>
+<ol class="arabic simple">
+<li>Use the Right Replication Technology and Configure It Properly</li>
+</ol>
+<p>The best overall tool for PostgreSQL multi-master replication between sites is TCapture.  The main reason for this assertion is that TCapture uses a flexible, asynchronous, point-to-point, master/slave replication model that handles a wide variety of topologies such as star replication or all-to-all.  Even so, you have to configure TCapture properly.  The following topology is currently my favorite:</p>
+<blockquote>
+<div>All-to-all topology.  Each master replicates directly to every other master.  This handles prolonged network outages or replication failures well, because one or more masters can drop out without breaking  replication between the remaining masters or requiring reconfiguration.  When the broken master(s) return, replication just resumes on all sides.  All-to-all does not work well if you have a large number of masters.
+Updates are not logged on slaves.  This keeps master binlogs simple, which is helpful for debugging, and eliminates the possibility of loops.  It also requires some extra configuration if the masters have their own slaves, as would be the case in a TCapture Enterprise cluster.</div></blockquote>
+<p>There are many ways to set up multi-master replication replication, and the right choice varies according to the number of masters, whether you have local clustering, or other considerations.  Giuseppe Maxia has described many topologies, for example here, and the TCapture Cookbook has even more details.</p>
+<p>One approach you should approach with special caution is PostgreSQL circular replication.  In topologies of three or more nodes, circular replication results in broken systems if one of the masters fails.  Also, you should be wary of any kind of synchronous multi-master replication across sites that are separated by more than 50 kilometers (i.e. 1-2ms latency).
+Synchronous replication makes a siren-like promise of consistency but the price you pay is slow performance under normal conditions and broken replication when WAN links go down.</p>
+<ol class="arabic simple" start="2">
+<li>Use Row-Based Replication to Avoid Data Drift</li>
+</ol>
+<p>Replication depends on deterministic updates&#8211;a transaction that changes 10 rows on the original master should change exactly the same rows when it executes against a replica.  Unfortunately many SQL statements that are deterministic in master/slave replication are non-deterministic in multi-master topologies.  Consider the following example, which gives a 10% raise to employees in department #35.</p>
+<blockquote>
+<div>UPDATE emp SET salary = salary * 1.1 WHERE dep_id = 35;</div></blockquote>
+<p>If all masters add employees, then the number of employees who actually get the raise will vary depending on whether such additions have replicated to all masters.  Your servers will very likely become inconsistent with statement replication.  The fix is to enable row-based replication using binlog-format=row in my.cnf.  Row replication transfers the exact row updates from each master to the others and eliminates ambiguity.</p>
+<ol class="arabic simple" start="3">
+<li>Prevent Key Collisions on INSERTs</li>
+</ol>
+<p>For applications that use auto-increment keys, PostgreSQL offers a useful trick to ensure that such keys do not  collide between masters using the auto-increment-increment and auto-increment-offset parameters in my.cnf.  The following example ensures that auto-increment keys start at 1 and increment by 4 to give values like 1, 5, 9, etc. on this server.</p>
+<p>server-id=1
+auto-increment-offset = 1
+auto-increment-increment = 4</p>
+<p>This works so long as your applications use auto-increment keys faithfully.  However, any table that either does not have a primary key or where the key is not an auto-increment field is suspect.  You need to hunt them down and ensure the application generates a proper key that does not collide across masters, for example using UUIDs or by putting the server ID into the key.   Here is a query on the PostgreSQL information schema to help locate tables that do not have an auto-increment primary key.</p>
+<dl class="docutils">
+<dt>SELECT t.table_schema, t.table_name</dt>
+<dd><dl class="first last docutils">
+<dt>FROM information_schema.tables t</dt>
+<dd><dl class="first last docutils">
+<dt>WHERE NOT EXISTS</dt>
+<dd><dl class="first last docutils">
+<dt>(SELECT * FROM information_schema.columns c</dt>
+<dd><dl class="first last docutils">
+<dt>WHERE t.table_schema = c.table_schema</dt>
+<dd>AND t.table_name = c.table_name
+AND c.column_key = &#8216;PRI&#8217;
+AND c.extra = &#8216;auto_increment&#8217;)</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+<ol class="arabic simple" start="4">
+<li>Beware of Semantic Conflicts in Applications</li>
+</ol>
+<p>Neither TCapture nor PostgreSQL native replication can resolve conflicts, though we are starting to design this capability for TCapture.  You need to avoid them in your applications.  Here are a few tips as you go about this.</p>
+<p>First, avoid obvious conflicts.  These include inserting data with the same keys on different masters (described above), updating rows in two places at once, or deleting rows that are updated elsewhere.  Any of these can cause errors that will break replication or cause your masters to become out of sync.  The good news is that many of these problems are not hard to detect and eliminate using properly formatted transactions.  The bad news is that these are the easy conflicts.  There are others that are much harder to address.</p>
+<p>For example, accounting systems need to generate unbroken sequences of numbers for invoices.  A common approach is to use a table that holds the next invoice number and increment it in the same transaction that creates a new invoice.  Another accounting example is reports that need to read the value of accounts consistently, for example at monthly close.  Neither example works off-the-shelf in a multi-master system with asynchronous replication, as they both require some form of synchronization to ensure global consistency across masters.  These and other such cases may force substantial application changes.  Some applications simply do not work with multi-master topologies for this reason.</p>
+<ol class="arabic simple" start="5">
+<li>Remove Triggers or Make Them Harmless</li>
+</ol>
+<p>Triggers are a bane of replication.  They conflict with row replication if they run by accident on the slave.  They can also create strange conflicts due to weird behavior/bugs (like this) or other problems like needing definer accounts present.  PostgreSQL native replication turns triggers off on slaves when using row replication, which is a very nice feature that prevents a lot of problems.</p>
+<p>TCapture on the other hand cannot suppress slave-side triggers.  You must instead alter each trigger to add an IF statement that prevents the trigger from running on the slave.  The technique is described in the TCapture Cookbook.  It is actually quite flexible and has some advantages for cleaning up data because you can also suppress trigger execution on the master.</p>
+<p>You should regard all triggers with suspicion when moving to multi-master.  If you cannot eliminate triggers, at least find them, look at them carefully to ensure they do not generate conflicts, and test them very thoroughly before deployment.  Here&#8217;s a query to help you hunt them down:</p>
+<dl class="docutils">
+<dt>SELECT trigger_schema, trigger_name</dt>
+<dd>FROM information_schema.triggers;</dd>
+</dl>
+<ol class="arabic simple" start="6">
+<li>Have a Plan for Sorting Out Mixed Up Data</li>
+</ol>
+<p>Master/slave replication has its discontents, but at least sorting out messed up replicas is simple: re-provision from another slave or the master.  No so with multi-master topologies&#8211;you can easily get into a situation where all masters have transactions you need to preserve and the only way to sort things out is to track down differences and update masters directly.   Here are some thoughts on how to do this.</p>
+<blockquote>
+<div>Ensure you have tools to detect inconsistencies.  TCapture has built-in consistency checking with the &#8216;trepctl check&#8217; command.  You can also use the Percona Toolkit pt-table-checksum to find differences.  Be forewarned that neither of these works especially well on large tables and may give false results if more than one master is active when you run them.
+Consider relaxing foreign key constraints.  I love foreign keys because they keep data in sync.  However, they can also create problems for fixing messed up data, because the constraints may break replication or make it difficult to go table-by-table when synchronizing across masters.  There is an argument for being a little more relaxed in multi-master settings.
+Switch masters off if possible.  Fixing problems is a lot easier if you can quiesce applications on all but one master.
+Know how to fix data.  Being handy with SQL is very helpful for fixing up problems.  I find SELECT INTO OUTFILE and LOAD DATA INFILE quite handy for moving changes between masters.  Don&#8217;t forget SET SESSION LOG_FILE_BIN=0 to keep changes from being logged and breaking replication elsewhere.  There are also various synchronization tools like pt-table-sync, but I do not know enough about them to make recommendations.</div></blockquote>
+<p>At this point it&#8217;s probably worth mentioning commercial support.  Unless you are a replication guru, it is very comforting to have somebody to call when you are dealing with messed up masters.  Even better, expert advice early on can help you avoid problems in the first place.</p>
+<p>(Disclaimer:  My company sells support for TCapture so I&#8217;m not unbiased.  That said, commercial outfits really earn their keep on problems like this.)</p>
+<ol class="arabic simple" start="7">
+<li>Test Everything</li>
+</ol>
+<p>Cutting corners on testing for multi-master can really hurt.  This article has described a lot of things to look for, so put together a test plan and check for them.  Here are a few tips on procedure:</p>
+<blockquote>
+<div>Set up a realistic pre-prod test with production data snapshots.
+Have a way to reset your test environment quickly from a single master, so you can get back to a consistent state to restart testing.
+Run tests on all masters, not just one.  You never know if things are properly configured everywhere until you try.
+Check data consistency after tests.  Quiesce your applications and run a consistency check to compare tables across masters.</div></blockquote>
+<p>It is tempting to take shortcuts or slack off, so you&#8217;ll need to find ways to improve your motivation.  If it helps, picture yourself explaining to the people you work for why your DBMS servers have conflicting data with broken replication, and the problem is getting worse because you cannot take applications offline to fix things.  It is a lot easier to ask for more time to test.  An even better approach is to hire great QA people and give them time to do the job right.</p>
+<p>Summary</p>
+<dl class="docutils">
+<dt>Before moving to a multi-master replication topology you should ask yourself whether the trouble is justified.  You can get many of the benefits of multi-master with system-of-record architectures with a lot less heartburn.</dt>
+<dd>That said, an increasing number of applications do require full multi-master across multiple sites.  If you operate one of them, I hope this article is helpful in getting you deployed or improving what you already have.</dd>
+</dl>
+<p>TCapture does a pretty good job of multi-master replication already, but I am optimistic we can make it much better.  There is a wealth of obvious features around conflict resolution, data repair, and up-front detection of problems that will make life better for TCapture users and reduce our support load.  Plus I believe we can make it easier for developers to write applications that run on multi-master DBMS topologies.  You will see more about how we do this in future articles on this blog.
+Posted by Robert Hodges at 12:57 AM
+Labels: PostgreSQL, Replication, TCapture</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mmrconsider.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

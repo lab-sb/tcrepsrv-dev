@@ -1,0 +1,189 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TCapture Installation &mdash; TCapture 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TCapture 1 documentation" href="index.html" />
+    <link rel="next" title="Adding a Primary node in TCapture" href="addproducer.html" />
+    <link rel="prev" title="TCapture Prerequisites" href="prerequisit.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="addproducer.html" title="Adding a Primary node in TCapture"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="prerequisit.html" title="TCapture Prerequisites"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tcapture-installation">
+<span id="installation"></span><h1>TCapture Installation<a class="headerlink" href="#tcapture-installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="install-postgresql">
+<h2>Install PostgreSQL<a class="headerlink" href="#install-postgresql" title="Permalink to this headline">¶</a></h2>
+<p>Since TCapture is a software for implementing data replication of Postgresql databases,  begin by <a class="reference external" href="https://www.postgresql.org/download/">installing PostgreSQL</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">TCapture currently supports PostgreSQL versions 10.1, 10.2, 10.3, 10.4, 10.5, and 11.0 on <strong>64-bit architectures</strong>.</p>
+</div>
+</div>
+<div class="section" id="install-tcapture">
+<h2>Install TCapture<a class="headerlink" href="#install-tcapture" title="Permalink to this headline">¶</a></h2>
+<p>Once you have PostgreSQL installed on your system, you just need to install the TCapture software and then execute the configuration scripts within your PostgreSQL database. You can download tarball package  from our release archives and install them directly.</p>
+<div class="highlight-sh"><div class="highlight"><pre>        Download zip from  https://github.com/lab-sb/tcrepsrv-dev
+        <span class="nb">cd</span> /var/lib/pgsql/scripts/mycode/
+        unzip tcrepsrv-dev-master.zip
+
+or
+        git clone https://github.com/lab-sb/tcrepsrv-dev.git
+
+as root:
+<span class="nb">cd </span>tcrepsrv-dev  directory
+ execute install.sh under TCapture software folder
+./install.sh  <span class="c">#cover the following steps:</span>
+
+- <span class="nb">set </span>variable RDBBDR HOME in .rdbbdr_env.sh
+- soruce environment file .rdbbdr_env.sh
+- installing TCapture logical decoding library under /usr/pgsql-10/lib
+
+examples.
+1- <span class="nb">echo</span> <span class="s2">&quot;export RDBBDR=/var/lib/pgsql/scripts/mycode/rdbbdr&quot;</span> &gt; .rdbbdr_env.sh
+2-. .rdbbdr_env.sh
+3-echo <span class="nv">$RDBBDR</span>
+4-/var/lib/pgsql/scripts/mycode/rdbbdr
+5-cd <span class="nv">$RDBBDR</span>
+6-cp ./rdbbdr/lib/rdb_decoder/rdblogdec.so /usr/pgsql-10/lib/
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-a-primary-database-node">
+<h2>Configuring a primary database node<a class="headerlink" href="#configuring-a-primary-database-node" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>check out the <a class="reference internal" href="addproducer.html#addproducer"><em>Adding a Primary node in TCapture</em></a> section. !</div></blockquote>
+</div>
+<div class="section" id="postgresql-hba-configuration">
+<h2>PostgreSQL hba Configuration<a class="headerlink" href="#postgresql-hba-configuration" title="Permalink to this headline">¶</a></h2>
+<p>By default, PostgreSQL is not configured to allow incoming connections from remote hosts. To enable incoming connections, first set the following line in <tt class="code docutils literal"><span class="pre">postgresql.conf</span></tt>:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">listen_addresses</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+</pre></div>
+</div>
+<p>And in <tt class="code docutils literal"><span class="pre">pg_hba.conf</span></tt>, add a line such as the following to allow incoming connections:</p>
+<div class="highlight-sh"><div class="highlight"><pre>host    all             all             &lt;ip address&gt;/&lt;subnet&gt;            md5
+</pre></div>
+</div>
+<p>For example, to allow incoming connections from any host:</p>
+<div class="highlight-sh"><div class="highlight"><pre>host    all             all             0.0.0.0/0            md5
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-postgresql">
+<h2>Running PostgreSQL<a class="headerlink" href="#running-postgresql" title="Permalink to this headline">¶</a></h2>
+<p>To run the PostgreSQL server in the background, use the <tt class="code docutils literal"><span class="pre">pg_ctl</span></tt> driver and point it to your newly initialized data directory:</p>
+<div class="highlight-sh"><div class="highlight"><pre>pg_ctl -D &lt;data directory&gt; -l postgresql.log start
+</pre></div>
+</div>
+<p>Now you’re ready to start using TCapture check out the <a class="reference internal" href="addproducer.html#addproducer"><em>Adding a Primary node in TCapture</em></a> section. !</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">TCapture Installation</a><ul>
+<li><a class="reference internal" href="#install-postgresql">Install PostgreSQL</a></li>
+<li><a class="reference internal" href="#install-tcapture">Install TCapture</a></li>
+<li><a class="reference internal" href="#configuring-a-primary-database-node">Configuring a primary database node</a></li>
+<li><a class="reference internal" href="#postgresql-hba-configuration">PostgreSQL hba Configuration</a></li>
+<li><a class="reference internal" href="#running-postgresql">Running PostgreSQL</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="prerequisit.html"
+                        title="previous chapter">TCapture Prerequisites</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="addproducer.html"
+                        title="next chapter">Adding a Primary node in TCapture</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/installation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="addproducer.html" title="Adding a Primary node in TCapture"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="prerequisit.html" title="TCapture Prerequisites"
+             >previous</a> |</li>
+        <li><a href="index.html">TCapture 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2019, EdsLab.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
