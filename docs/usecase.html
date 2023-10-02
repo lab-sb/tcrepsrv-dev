@@ -56,25 +56,13 @@
 <div class="section" id="use-cases">
 <h2>Use cases<a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></h2>
 <p>-FULL DB WITH MASTER-MASTER REPLICATION</p>
-<blockquote>
-<div>Each DB Instance is supported by a single transactional Read/Write DB database that contains all Shipments even if only a subset of them can be edited (the others must be edited on the owning DB Instance).
-In this scenario we have to face a Multi Master replication even if, from a logical point of view, the replication remains Master-Slave (each record can be edited only in his own DB Instance) thus minimizing conflict issues.</div></blockquote>
-<p>-Migrating Document Storage Database with TCapture RepSrv</p>
-<blockquote>
-<div><ul class="simple">
-<li>~10 TB size of production database</li>
-<li>Postgresql v9.5</li>
-<li>Need to migrato to v10</li>
-<li>A limited set of tables with binary data</li>
-<li>A very big one with binary data</li>
+<dl class="docutils">
+<dt>-Migrating Document Storage Database with TCapture RepSrv</dt>
+<dd><ul class="first last simple">
+<li>Replication server between versions</li>
 </ul>
-<p>document_data (doc_id integer,doc_data bytea )
-Migration difficulties
-• Time obstacle dump/restore
-• Pg_basebackup not possible between main versions
-• ??
-• Replication server between versions</p>
-</div></blockquote>
+</dd>
+</dl>
 </div>
 </div>
 

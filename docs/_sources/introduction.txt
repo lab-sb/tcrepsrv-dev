@@ -11,7 +11,7 @@ Overview
 
 TCapture is a bidirectional multi master replication server based on a “capture and apply” asynchronous replica engine. It is based on PostgreSQL open-source Object-Relational RDBMS.
 
-“TCapture” is a new software for implementing data replication of Postgresql databases. T-Capture  was introduced for PG v>9.4 , released in beta version on March 2019 .
+“TCapture” is a new software for implementing data replication of Postgresql databases. T-Capture  was introduced for PG v>9.4 , released in beta version on March 2022 .
  TCapture  is available currently on Linux . T-Capture  supports PG-to-PG, log-based  replication of DML .
  The big advantage of T-Capture  is that  is based on PostgreSQL’s logical decoding. It capture transactions for replication from Write-Ahead Logs (WAL) instead of using triggers, eliminating overhead on master databases and significantly reduces latency..
 

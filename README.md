@@ -80,7 +80,7 @@ To install this module type the following, :
 DOCUMENTATION:
 --------------
 
-See TCRepSrv-v1.0_beta.pdf 
+See docs, html documentation
 
 GETTING HELP:
 -------------

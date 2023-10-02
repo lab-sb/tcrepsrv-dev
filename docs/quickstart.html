@@ -931,43 +931,6 @@ table dba.__events_ddl;
 797 | 4B67/80A38000 | 2411327431 | statusr | webp | MASTER | DROP NODE | 2021-03-19 15:06:34.203928+01
 </pre></div>
 </div>
-<p>Other features</p>
-<blockquote>
-<div><p>Set queues deep with walqtrunc in conf file</p>
-<p>walqtrunc=9
-Set batch size
-batch_size=500
-Set enabling queue history
-log_hist=false</p>
-</div></blockquote>
-<p>Filtering</p>
-<p>-To do</p>
-<blockquote>
-<div>Crypt passwd
-New version (parallalel Dispatcher Consumers)</div></blockquote>
-</div>
-<div class="section" id="use-cases">
-<h2>Use cases<a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></h2>
-<p>-FULL DB WITH MASTER-MASTER REPLICATION</p>
-<blockquote>
-<div>Each DB Instance is supported by a single transactional Read/Write DB database that contains all Shipments even if only a subset of them can be edited (the others must be edited on the owning DB Instance).
-In this scenario we have to face a Multi Master replication even if, from a logical point of view, the replication remains Master-Slave (each record can be edited only in his own DB Instance) thus minimizing conflict issues.</div></blockquote>
-<p>-Migrating Document Storage Database with TCapture RepSrv</p>
-<blockquote>
-<div><ul class="simple">
-<li>~10 TB size of production database</li>
-<li>Postgresql v9.5</li>
-<li>Need to migrato to v10</li>
-<li>A limited set of tables with binary data</li>
-<li>A very big one with binary data</li>
-</ul>
-<p>document_data (doc_id integer,doc_data bytea )
-Migration difficulties
-• Time obstacle dump/restore
-• Pg_basebackup not possible between main versions
-• ??
-• Replication server between versions</p>
-</div></blockquote>
 </div>
 </div>
 
@@ -985,7 +948,6 @@ Migration difficulties
 <li><a class="reference internal" href="#test-table-definition">Test table definition</a></li>
 <li><a class="reference internal" href="#steps-to-configure-a-mmr-between-2-nodes-in-vdc-located-on-milan-and-newyork">Steps to configure a mmr between 2 nodes in vdc located on milan and newyork</a></li>
 <li><a class="reference internal" href="#a-full-example">A full example</a></li>
-<li><a class="reference internal" href="#use-cases">Use cases</a></li>
 </ul>
 </li>
 </ul>
