@@ -1,18 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * rdblogdec.c
- *              Logical decoding output plugin generating SQL queries based
- *              on things decoded.
+ * Logical decoding output plugin generating SQL queries based on things decoded.
+ * The implementation is an extension of code https://github.com/michaelpq/pg_plugins/tree/main/decoder_raw
  *
- * Portions Copyright (c) 2012-2021, PostgreSQL Global Development Group
- * Portions Copyright (c) 2018-2021, silvio.brandani <support@tcapture.net>.
+ * Portions Copyright (c) 1996-2023, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2022-2023, silvio.brandani <support@tcapture.net>.
  *
  * IDENTIFICATION
  *                rdb_bdr/rdblogdec.c
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/genam.h"
