@@ -28,11 +28,6 @@ KEY FEATURE:
 - Open Source. No licensing fees, but occasionally you'll have to get your hands dirty
 
 
-COPYRIGHT:
-----------
-	Copyright (c) 2022-2023  Silvio Brandani <mktg.tcapture@gmail.com>. All rights reserved.
-
-
 REQUIREMENTS:
 -------------
         Platforms: CentOS, 64-bit - Red Hat Enterprise Linux (RHEL), 64-bit
