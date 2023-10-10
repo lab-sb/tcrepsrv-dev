@@ -75,7 +75,7 @@ To install this module type the following, :
 DOCUMENTATION:
 --------------
 
-See docs, html documentation
+See docs, html documentation https://tcapturesupport.github.io/
 
 GETTING HELP:
 -------------
