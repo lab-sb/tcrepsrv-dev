@@ -1,0 +1,31 @@
+i--------------------------------------------------------------------------------------------------
+-- Versione PG 16  - Red Hat Enterprise Linux release 9.3 (Plow)
+------------------------------------------------------------------------------------------------------
+
+https://download.postgresql.org/pub/repos/yum/16/redhat/rhel-9.3-x86_64/postgresql16-devel-16.1-2PGDG.rhel9.x86_64.rpm  
+
+dnf  install perl-IPC-Run
+  dnf  install perl-File-Find
+  dnf  install perl-Test-More
+  dnf  install perl-Test
+  dnf  install perl-Time
+  dnf  install perl-Test-Simple
+  dnf  install perl-Time-HiRes
+  dnf  install clang-devel libicu-devel  llvm-devel
+  rpm -ivh postgresql16-devel-16.2-1PGDG.rhel9.x86_64.rpm
+  cd /tmp/rdb_decoder/
+  export PATH=/usr/pgsql-16/bin/:$PATH
+  make clean
+  make
+   sudo dnf install redhat-rpm-config
+  export PATH=/usr/pgsql-16/bin/:$PATH
+  cd /tmp/rdb_decoder/
+  make
+ make install
+		/usr/bin/mkdir -p '/usr/pgsql-16/lib'
+		/usr/bin/install -c -m 755  rdblogdec.so '/usr/pgsql-16/lib/'
+		/usr/bin/mkdir -p '/usr/pgsql-16/lib/bitcode/rdblogdec'
+		/usr/bin/mkdir -p '/usr/pgsql-16/lib/bitcode'/rdblogdec/
+		/usr/bin/install -c -m 644 rdblogdec.bc '/usr/pgsql-16/lib/bitcode'/rdblogdec/./
+		cd '/usr/pgsql-16/lib/bitcode' && /usr/bin/llvm-lto -thinlto -thinlto-action=thinlink -o rdblogdec.index.bc rdblogdec/rdblogdec.bc
+
